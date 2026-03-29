@@ -1,0 +1,16 @@
+{
+  "name": "yogai-mobile-root",
+  "private": true,
+  "scripts": {
+    "mobile:start": "npm --prefix ./YogAI run start",
+    "mobile:start:reset": "npm --prefix ./YogAI run start -- --reset-cache",
+    "mobile:android": "npm --prefix ./YogAI run android",
+    "mobile:ios": "npm --prefix ./YogAI run ios"
+  },
+  "devDependencies": {
+    "@react-native-community/cli": "latest",
+    "@react-native-community/cli-platform-android": "^20.1.3",
+    "@react-native-community/cli-platform-ios": "^20.1.3",
+    "@react-native/community-cli-plugin": "^0.84.1"
+  }
+}
