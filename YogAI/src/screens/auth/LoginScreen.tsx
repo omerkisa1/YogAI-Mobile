@@ -1,25 +1,29 @@
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-	ActivityIndicator,
 	KeyboardAvoidingView,
-	Modal,
 	Platform,
 	Pressable,
+	ScrollView,
+	StatusBar,
 	StyleSheet,
 	Text,
-	TextInput,
 	View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { useAuth } from '../../features/auth/hooks/useAuth';
+import BottomSheet from '../../shared/components/BottomSheet';
 import Button from '../../shared/components/Button';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import ErrorView from '../../shared/components/ErrorView';
+import Input from '../../shared/components/Input';
 import { AuthStackParamList } from '../../navigation/types';
+import { colors } from '../../theme/colors';
+import { radius, spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
@@ -28,267 +32,424 @@ interface LoginFormValues {
 	password: string;
 }
 
-const mapFirebaseErrorToTurkish = (error: unknown) => {
+interface PasswordResetFormValues {
+	email: string;
+}
+
+interface FirebaseErrorMapping {
+	text1: string;
+	text2: string;
+	type: 'network' | 'generic';
+}
+
+const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 	const code = (error as FirebaseAuthTypes.NativeFirebaseAuthError | undefined)?.code;
 
 	switch (code) {
 		case 'auth/user-not-found':
-			return 'Bu email ile kayitli kullanici bulunamadi';
+			return {
+				text1: 'Giris basarisiz',
+				text2: 'Bu email ile kayitli kullanici bulunamadi.',
+				type: 'generic',
+			};
 		case 'auth/wrong-password':
 		case 'auth/invalid-credential':
-			return 'Sifre hatali';
+			return {
+				text1: 'Giris basarisiz',
+				text2: 'Sifre hatali. Lutfen tekrar deneyin.',
+				type: 'generic',
+			};
 		case 'auth/invalid-email':
-			return 'Gecersiz email adresi';
+			return {
+				text1: 'Gecersiz email',
+				text2: 'Lutfen gecerli bir email adresi girin.',
+				type: 'generic',
+			};
 		case 'auth/too-many-requests':
-			return 'Cok fazla deneme yapildi, lutfen bekleyin';
+			return {
+				text1: 'Cok fazla deneme',
+				text2: 'Lutfen bir sure bekleyip tekrar deneyin.',
+				type: 'generic',
+			};
 		case 'auth/network-request-failed':
-			return 'Internet baglantinizi kontrol edin';
+			return {
+				text1: 'Baglanti hatasi',
+				text2: 'Internet baglantinizi kontrol edin.',
+				type: 'network',
+			};
 		default:
-			return 'Giris islemi basarisiz';
+			return {
+				text1: 'Giris basarisiz',
+				text2: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+				type: 'generic',
+			};
 	}
 };
 
 const LoginScreen = ({ navigation }: Props) => {
 	const { signInWithEmail, signInWithGoogle, resetPassword, isSubmitting } = useAuth();
-	const [isResetModalVisible, setIsResetModalVisible] = React.useState(false);
-	const [resetEmail, setResetEmail] = React.useState('');
+	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+	const [isResetSheetVisible, setIsResetSheetVisible] = useState(false);
+	const [hasNetworkError, setHasNetworkError] = useState(false);
 
-	const { control, handleSubmit, watch } = useForm<LoginFormValues>({
+	const {
+		control,
+		handleSubmit,
+		watch,
+		formState: { errors },
+	} = useForm<LoginFormValues>({
 		defaultValues: {
 			email: '',
 			password: '',
 		},
+		mode: 'onSubmit',
 	});
 
-	const formEmail = watch('email');
+	const {
+		control: resetControl,
+		handleSubmit: handleResetSubmit,
+		setValue: setResetValue,
+		formState: { errors: resetErrors },
+	} = useForm<PasswordResetFormValues>({
+		defaultValues: {
+			email: '',
+		},
+	});
 
-	React.useEffect(() => {
-		if (formEmail) {
-			setResetEmail(formEmail);
+	const currentEmail = watch('email');
+
+	useEffect(() => {
+		if (currentEmail?.trim()) {
+			setResetValue('email', currentEmail.trim());
 		}
-	}, [formEmail]);
+	}, [currentEmail, setResetValue]);
+
+	const separator = useMemo(
+		() => (
+			<View style={styles.separatorRow}>
+				<View style={styles.separatorLine} />
+				<Text style={styles.separatorText}>veya</Text>
+				<View style={styles.separatorLine} />
+			</View>
+		),
+		[],
+	);
 
 	const onSubmit = handleSubmit(async values => {
+		setHasNetworkError(false);
 		try {
 			await signInWithEmail(values.email.trim(), values.password);
 		} catch (error) {
+			const mappedError = mapFirebaseErrorToTurkish(error);
+			if (mappedError.type === 'network') {
+				setHasNetworkError(true);
+			}
+
 			Toast.show({
 				type: 'error',
-				text1: 'Giris basarisiz',
-				text2: mapFirebaseErrorToTurkish(error),
+				position: 'top',
+				text1: mappedError.text1,
+				text2: mappedError.text2,
 			});
 		}
 	});
 
 	const onGoogleSignIn = async () => {
+		setHasNetworkError(false);
 		try {
 			await signInWithGoogle();
 		} catch (error) {
+			const mappedError = mapFirebaseErrorToTurkish(error);
+			if (mappedError.type === 'network') {
+				setHasNetworkError(true);
+			}
+
 			Toast.show({
 				type: 'error',
-				text1: 'Google giris basarisiz',
-				text2: mapFirebaseErrorToTurkish(error),
+				position: 'top',
+				text1: mappedError.text1,
+				text2: mappedError.text2,
 			});
 		}
 	};
 
-	const onResetPassword = async () => {
-		const email = resetEmail.trim();
-		if (!email) {
-			Toast.show({
-				type: 'error',
-				text1: 'Email gerekli',
-				text2: 'Lutfen email adresinizi girin',
-			});
-			return;
-		}
-
+	const onResetPassword = handleResetSubmit(async values => {
+		setHasNetworkError(false);
 		try {
-			await resetPassword(email);
-			setIsResetModalVisible(false);
+			await resetPassword(values.email.trim());
+			setIsResetSheetVisible(false);
 			Toast.show({
 				type: 'success',
+				position: 'top',
 				text1: 'Basarili',
-				text2: 'Sifre sifirlama linki gonderildi',
+				text2: 'Sifre sifirlama linki gonderildi.',
 			});
 		} catch (error) {
+			const mappedError = mapFirebaseErrorToTurkish(error);
+			if (mappedError.type === 'network') {
+				setHasNetworkError(true);
+			}
+
 			Toast.show({
 				type: 'error',
-				text1: 'Sifre sifirlama basarisiz',
-				text2: mapFirebaseErrorToTurkish(error),
+				position: 'top',
+				text1: mappedError.text1,
+				text2: mappedError.text2,
 			});
 		}
-	};
+	});
 
 	return (
-		<KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-			<View style={styles.content}>
-				<Text style={styles.title}>YogAI</Text>
-				<Text style={styles.subtitle}>AI Yoga Asistaniniz</Text>
+		<SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<KeyboardAvoidingView
+				style={styles.keyboardAvoid}
+				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+			>
+				<ScrollView
+					contentContainerStyle={styles.scrollContent}
+					keyboardShouldPersistTaps="handled"
+					showsVerticalScrollIndicator={false}
+				>
+					<View style={styles.brandingSection}>
+						<View style={styles.brandIconWrap}>
+							<MaterialCommunityIcons name="flower-lotus" size={74} color={colors.primary} />
+						</View>
+						<Text style={styles.brandTitle}>YogAI</Text>
+						<Text style={styles.brandSubtitle}>Kisisel AI yoga asistaniniz</Text>
+					</View>
 
+					{hasNetworkError ? (
+						<View style={styles.errorBox}>
+							<ErrorView
+								type="network"
+								onRetry={() => {
+									setHasNetworkError(false);
+									void onSubmit();
+								}}
+							/>
+						</View>
+					) : null}
+
+					<View style={styles.formSection}>
+						<Controller
+							name="email"
+							control={control}
+							rules={{
+								required: 'Email zorunlu',
+								pattern: {
+									value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+									message: 'Gecerli email adresi girin',
+								},
+							}}
+							render={({ field: { value, onChange } }) => (
+								<Input
+									label="Email"
+									placeholder="ornek@email.com"
+									value={value}
+									onChangeText={onChange}
+									error={errors.email?.message}
+									icon="email-outline"
+									keyboardType="email-address"
+									autoCapitalize="none"
+									textContentType="emailAddress"
+									accessibilityLabel="Email adresi"
+								/>
+							)}
+						/>
+
+						<Controller
+							name="password"
+							control={control}
+							rules={{
+								required: 'Sifre zorunlu',
+								minLength: {
+									value: 6,
+									message: 'Sifre en az 6 karakter olmali',
+								},
+							}}
+							render={({ field: { value, onChange } }) => (
+								<Input
+									label="Sifre"
+									placeholder="Sifrenizi girin"
+									value={value}
+									onChangeText={onChange}
+									error={errors.password?.message}
+									icon="lock-outline"
+									secureTextEntry={!isPasswordVisible}
+									rightIcon={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+									onRightIconPress={() => setIsPasswordVisible(prev => !prev)}
+									textContentType="password"
+									accessibilityLabel="Sifre"
+								/>
+							)}
+						/>
+
+						<Button
+							title="Giris Yap"
+							onPress={onSubmit}
+							variant="primary"
+							size="lg"
+							loading={isSubmitting}
+							disabled={isSubmitting}
+							fullWidth
+							accessibilityLabel="Giris yap"
+						/>
+
+						<Pressable
+							onPress={() => setIsResetSheetVisible(true)}
+							disabled={isSubmitting}
+							style={styles.forgotContainer}
+							accessibilityRole="button"
+							accessibilityLabel="Sifremi unuttum"
+						>
+							<Text style={styles.forgotText}>Sifremi unuttum</Text>
+						</Pressable>
+
+						{separator}
+
+						<Button
+							title="Google ile Giris Yap"
+							onPress={onGoogleSignIn}
+							variant="outline"
+							size="lg"
+							icon="google"
+							loading={isSubmitting}
+							disabled={isSubmitting}
+							fullWidth
+							accessibilityLabel="Google ile giris yap"
+						/>
+
+						<View style={styles.registerRow}>
+							<Text style={styles.registerHint}>Hesabin yok mu?</Text>
+							<Pressable
+								onPress={() => navigation.navigate('Register')}
+								style={styles.registerPressable}
+								accessibilityRole="button"
+								accessibilityLabel="Kayit ol ekranina git"
+							>
+								<Text style={styles.registerAction}>Kayit Ol</Text>
+							</Pressable>
+						</View>
+					</View>
+				</ScrollView>
+			</KeyboardAvoidingView>
+
+			<BottomSheet
+				visible={isResetSheetVisible}
+				onClose={() => setIsResetSheetVisible(false)}
+				title="Sifre sifirlama"
+			>
 				<Controller
 					name="email"
-					control={control}
+					control={resetControl}
 					rules={{
 						required: 'Email zorunlu',
 						pattern: {
 							value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-							message: 'Gecerli email girin',
+							message: 'Gecerli email adresi girin',
 						},
 					}}
-					render={({ field: { onChange, value }, fieldState: { error } }) => (
-						<View style={styles.inputGroup}>
-							<Text style={styles.label}>Email</Text>
-							<TextInput
-								style={styles.input}
-								autoCapitalize="none"
-								keyboardType="email-address"
-								onChangeText={onChange}
-								value={value}
-								placeholder="ornek@email.com"
-								placeholderTextColor={colors.textMuted}
-							/>
-							{error ? <Text style={styles.error}>{error.message}</Text> : null}
-						</View>
-					)}
-				/>
-
-				<Controller
-					name="password"
-					control={control}
-					rules={{
-						required: 'Sifre zorunlu',
-						minLength: { value: 6, message: 'En az 6 karakter olmali' },
-					}}
-					render={({ field: { onChange, value }, fieldState: { error } }) => (
-						<View style={styles.inputGroup}>
-							<Text style={styles.label}>Sifre</Text>
-							<TextInput
-								style={styles.input}
-								secureTextEntry
-								autoCapitalize="none"
-								onChangeText={onChange}
-								value={value}
-								placeholder="******"
-								placeholderTextColor={colors.textMuted}
-							/>
-							{error ? <Text style={styles.error}>{error.message}</Text> : null}
-						</View>
-					)}
-				/>
-
-				<Button label="Giris Yap" onPress={onSubmit} loading={isSubmitting} />
-
-				<Pressable
-					onPress={() => setIsResetModalVisible(true)}
-					disabled={isSubmitting}
-					style={styles.forgotContainer}
-				>
-					<Text style={styles.forgotText}>Sifremi unuttum</Text>
-				</Pressable>
-
-				<View style={styles.separatorRow}>
-					<View style={styles.separatorLine} />
-					<Text style={styles.separatorText}>veya</Text>
-					<View style={styles.separatorLine} />
-				</View>
-
-				<Pressable
-					onPress={onGoogleSignIn}
-					disabled={isSubmitting}
-					style={({ pressed }) => [styles.googleButton, pressed && styles.pressed, isSubmitting && styles.disabled]}
-				>
-					{isSubmitting ? <ActivityIndicator color="#1F1F1F" /> : <Text style={styles.googleText}>Google ile Giris Yap</Text>}
-				</Pressable>
-
-				<Pressable onPress={() => navigation.navigate('Register')} style={styles.linkContainer}>
-					<Text style={styles.linkText}>Hesabin yok mu? Kayit ol</Text>
-				</Pressable>
-			</View>
-
-			<Modal
-				visible={isResetModalVisible}
-				transparent
-				animationType="fade"
-				onRequestClose={() => setIsResetModalVisible(false)}
-			>
-				<View style={styles.modalOverlay}>
-					<View style={styles.modalCard}>
-						<Text style={styles.modalTitle}>Sifre Sifirlama</Text>
-						<Text style={styles.modalSubtitle}>Email adresinizi girin</Text>
-						<TextInput
-							style={styles.input}
-							value={resetEmail}
-							onChangeText={setResetEmail}
-							autoCapitalize="none"
-							keyboardType="email-address"
+					render={({ field: { value, onChange } }) => (
+						<Input
+							label="Email"
 							placeholder="ornek@email.com"
-							placeholderTextColor={colors.textMuted}
+							value={value}
+							onChangeText={onChange}
+							error={resetErrors.email?.message}
+							icon="email-outline"
+							keyboardType="email-address"
+							autoCapitalize="none"
+							accessibilityLabel="Sifre sifirlama email"
 						/>
-						<View style={styles.modalActions}>
-							<Button
-								label="Iptal"
-								variant="outline"
-								onPress={() => setIsResetModalVisible(false)}
-								disabled={isSubmitting}
-								fullWidth={false}
-							/>
-							<Button label="Gonder" onPress={onResetPassword} loading={isSubmitting} fullWidth={false} />
-						</View>
-					</View>
+					)}
+				/>
+
+				<View style={styles.sheetActions}>
+					<Button
+						title="Iptal"
+						onPress={() => setIsResetSheetVisible(false)}
+						variant="ghost"
+						size="md"
+						fullWidth
+						accessibilityLabel="Sifre sifirlama iptal"
+					/>
+					<Button
+						title="Sifirlama Linki Gonder"
+						onPress={onResetPassword}
+						variant="primary"
+						size="md"
+						loading={isSubmitting}
+						disabled={isSubmitting}
+						fullWidth
+						accessibilityLabel="Sifirlama linki gonder"
+					/>
 				</View>
-			</Modal>
-		</KeyboardAvoidingView>
+			</BottomSheet>
+		</SafeAreaView>
 	);
 };
 
 const styles = StyleSheet.create({
-	container: {
+	safeArea: {
 		flex: 1,
 		backgroundColor: colors.background,
+	},
+	keyboardAvoid: {
+		flex: 1,
+	},
+	scrollContent: {
+		paddingHorizontal: spacing.base,
+		paddingBottom: spacing.huge,
+	},
+	brandingSection: {
+		minHeight: 260,
+		alignItems: 'center',
 		justifyContent: 'center',
+		paddingTop: spacing.lg,
+		paddingBottom: spacing.base,
 	},
-	content: {
-		padding: spacing.lg,
-		gap: spacing.md,
+	brandIconWrap: {
+		width: 120,
+		height: 120,
+		borderRadius: radius.full,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: colors.primarySoft,
+		marginBottom: spacing.base,
 	},
-	title: {
-		...typography.h1,
-		color: colors.text,
+	brandTitle: {
+		...typography.display,
+		color: colors.primary,
 	},
-	subtitle: {
+	brandSubtitle: {
 		...typography.body,
 		color: colors.textSecondary,
-		marginBottom: spacing.md,
+		marginTop: spacing.xs,
+	},
+	formSection: {
+		backgroundColor: colors.surface,
+		borderRadius: radius.xl,
+		paddingHorizontal: spacing.base,
+		paddingTop: spacing.lg,
+		paddingBottom: spacing.xl,
+		borderWidth: 1,
+		borderColor: colors.borderLight,
 	},
 	forgotContainer: {
 		alignSelf: 'flex-end',
+		marginBottom: spacing.base,
 	},
 	forgotText: {
-		...typography.bodySmall,
-		color: colors.primaryLight,
-	},
-	googleButton: {
-		backgroundColor: '#FFFFFF',
-		borderRadius: 12,
-		minHeight: 48,
-		justifyContent: 'center',
-		alignItems: 'center',
-	},
-	googleText: {
-		...typography.button,
-		color: '#1F1F1F',
-	},
-	pressed: {
-		opacity: 0.9,
-	},
-	disabled: {
-		opacity: 0.6,
+		...typography.bodySm,
+		color: colors.textSecondary,
+		textDecorationLine: 'underline',
 	},
 	separatorRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: spacing.sm,
+		marginBottom: spacing.base,
 	},
 	separatorLine: {
 		flex: 1,
@@ -299,57 +460,29 @@ const styles = StyleSheet.create({
 		...typography.caption,
 		color: colors.textMuted,
 	},
-	inputGroup: {
-		gap: spacing.xs,
-	},
-	label: {
-		...typography.bodySmall,
-		color: colors.textSecondary,
-	},
-	input: {
-		borderWidth: 1,
-		borderColor: colors.border,
-		borderRadius: 12,
-		backgroundColor: colors.surface,
-		color: colors.text,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
-	},
-	error: {
-		...typography.caption,
-		color: colors.error,
-	},
-	linkContainer: {
-		alignSelf: 'center',
-		marginTop: spacing.sm,
-	},
-	linkText: {
-		...typography.bodySmall,
-		color: colors.primaryLight,
-	},
-	modalOverlay: {
-		flex: 1,
-		backgroundColor: 'rgba(0, 0, 0, 0.5)',
-		justifyContent: 'center',
-		padding: spacing.lg,
-	},
-	modalCard: {
-		backgroundColor: colors.surface,
-		borderRadius: 16,
-		padding: spacing.lg,
-		gap: spacing.md,
-	},
-	modalTitle: {
-		...typography.h3,
-		color: colors.text,
-	},
-	modalSubtitle: {
-		...typography.bodySmall,
-		color: colors.textSecondary,
-	},
-	modalActions: {
+	registerRow: {
 		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginTop: spacing.lg,
+	},
+	registerHint: {
+		...typography.bodySm,
+		color: colors.textSecondary,
+	},
+	registerPressable: {
+		marginLeft: spacing.xs,
+	},
+	registerAction: {
+		...typography.bodySmMedium,
+		color: colors.primary,
+	},
+	errorBox: {
+		marginBottom: spacing.base,
+	},
+	sheetActions: {
 		gap: spacing.sm,
+		marginTop: spacing.sm,
 	},
 });
 

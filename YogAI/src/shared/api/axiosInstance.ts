@@ -1,5 +1,7 @@
 import auth from '@react-native-firebase/auth';
 import axios from 'axios';
+import Toast from 'react-native-toast-message';
+import { useAuthStore } from '../../features/auth/stores/authStore';
 import { API_URL } from '../config/env';
 
 const api = axios.create({
@@ -21,21 +23,69 @@ api.interceptors.request.use(async config => {
 api.interceptors.response.use(
 	response => response,
 	async error => {
-		if (error.response?.status === 401) {
+		const status: number | undefined = error.response?.status;
+		const message: string | undefined =
+			error.response?.data?.error || error.response?.data?.message;
+		const config = (error.config ?? {}) as {
+			_retry?: boolean;
+			headers?: Record<string, string>;
+			skipGlobalErrorHandler?: boolean;
+		};
+		const shouldHandleGlobally = !config.skipGlobalErrorHandler;
+
+		if (status === 401) {
 			const user = auth().currentUser;
-			if (user && error.config && !error.config.__retried) {
+			if (user && !config._retry) {
 				const freshToken = await user.getIdToken(true);
-				const retryConfig = {
-					...error.config,
-					__retried: true,
-					headers: {
-						...error.config.headers,
-						Authorization: `Bearer ${freshToken}`,
-					},
-				};
-				return api.request(retryConfig);
+				config._retry = true;
+				config.headers = config.headers ?? {};
+				config.headers.Authorization = `Bearer ${freshToken}`;
+				return api.request(config);
+			}
+
+			useAuthStore.getState().setUser(null);
+		}
+
+		if (shouldHandleGlobally) {
+			switch (status) {
+				case 400:
+					if (message) {
+						Toast.show({
+							type: 'error',
+							position: 'top',
+							text1: message,
+						});
+					}
+					break;
+				case 403:
+					Toast.show({
+						type: 'error',
+						position: 'top',
+						text1: 'Yetkisiz islem',
+					});
+					break;
+				case 404:
+					break;
+				case 500:
+					Toast.show({
+						type: 'error',
+						position: 'top',
+						text1: 'Sunucu hatasi',
+						text2: 'Lutfen tekrar deneyin',
+					});
+					break;
+				default:
+					if (!error.response) {
+						Toast.show({
+							type: 'error',
+							position: 'top',
+							text1: 'Baglanti hatasi',
+							text2: 'Internet baglantinizi kontrol edin',
+						});
+					}
 			}
 		}
+
 		return Promise.reject(error);
 	},
 );

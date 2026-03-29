@@ -17,7 +17,9 @@ export const useAuth = () => {
 				last_login_at: new Date().toISOString(),
 			});
 		} catch (error) {
-			console.warn('Failed to update platform info:', error);
+			if (__DEV__) {
+				console.log('Failed to update platform info:', error);
+			}
 		}
 	};
 

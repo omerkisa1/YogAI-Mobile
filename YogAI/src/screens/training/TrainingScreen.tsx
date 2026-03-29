@@ -1,6 +1,6 @@
 import React from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Button from '../../shared/components/Button';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -11,17 +11,24 @@ type Props = NativeStackScreenProps<RootStackParamList, 'TrainingSession'>;
 
 const TrainingScreen = ({ route }: Props) => {
 	return (
-		<View style={styles.container}>
-			<Text style={styles.title}>Canli Antrenman</Text>
-			<Text style={styles.meta}>Plan ID: {route.params.planId}</Text>
-			<Text style={styles.meta}>Session ID: {route.params.sessionId}</Text>
-			<Text style={styles.description}>Kamera tabanli poz analizi yakin zamanda eklenecek.</Text>
-			<Button label="Yakinda" onPress={() => {}} disabled />
-		</View>
+		<SafeAreaView style={styles.safeArea}>
+			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<View style={styles.container}>
+				<Text style={styles.title}>Canli Antrenman</Text>
+				<Text style={styles.meta}>Plan ID: {route.params.planId}</Text>
+				<Text style={styles.meta}>Session ID: {route.params.sessionId}</Text>
+				<Text style={styles.description}>Kamera tabanli poz analizi yakin zamanda eklenecek.</Text>
+				<Button title="Yakinda" onPress={() => {}} disabled />
+			</View>
+		</SafeAreaView>
 	);
 };
 
 const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: colors.background,
+	},
 	container: {
 		flex: 1,
 		backgroundColor: colors.background,

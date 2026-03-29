@@ -1,163 +1,388 @@
-import React from 'react';
-import { NavigationProp, useNavigation } from '@react-navigation/native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
 	Alert,
 	FlatList,
 	Pressable,
 	RefreshControl,
+	SafeAreaView,
+	StatusBar,
 	StyleSheet,
 	Text,
 	View,
 } from 'react-native';
-import { useDeletePlan } from '../../features/plans/hooks/useCreatePlan';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Toast from 'react-native-toast-message';
+import { useDeletePlan, useUpdatePlan } from '../../features/plans/hooks/useCreatePlan';
 import { usePlans } from '../../features/plans/hooks/usePlans';
-import { Plan } from '../../shared/types/plan';
-import Card from '../../shared/components/Card';
+import BottomSheet from '../../shared/components/BottomSheet';
+import Button from '../../shared/components/Button';
+import Chip from '../../shared/components/Chip';
+import EmptyState from '../../shared/components/EmptyState';
 import ErrorView from '../../shared/components/ErrorView';
-import LoadingScreen from '../../shared/components/LoadingScreen';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import PlanCard from '../../shared/components/PlanCard';
+import SkeletonLoader from '../../shared/components/SkeletonLoader';
+import { Plan } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
+import { colors } from '../../theme/colors';
+import { radius, shadows, spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
+
+type PlanFilter = 'all' | 'favorites' | 'beginner' | 'intermediate' | 'advanced';
+
+interface FilterOption {
+	key: PlanFilter;
+	label: string;
+}
+
+const filterOptions: FilterOption[] = [
+	{ key: 'all', label: 'Tumu' },
+	{ key: 'favorites', label: 'Favoriler' },
+	{ key: 'beginner', label: 'Baslangic' },
+	{ key: 'intermediate', label: 'Orta' },
+	{ key: 'advanced', label: 'Ileri' },
+];
 
 const PlansScreen = () => {
 	const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 	const plansQuery = usePlans();
+	const updatePlanMutation = useUpdatePlan();
 	const deletePlanMutation = useDeletePlan();
 
-	const handleDelete = (planId: string) => {
-		Alert.alert('Plani Sil', 'Bu plani silmek istediginize emin misiniz?', [
-			{ text: 'Vazgec', style: 'cancel' },
-			{
-				text: 'Sil',
-				style: 'destructive',
-				onPress: () => {
-					deletePlanMutation.mutate(planId);
+	const [activeFilter, setActiveFilter] = useState<PlanFilter>('all');
+	const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+	const [isRefreshing, setRefreshing] = useState(false);
+
+	const plans = useMemo(() => (Array.isArray(plansQuery.data) ? plansQuery.data : []), [plansQuery.data]);
+
+	const filteredPlans = useMemo(() => {
+		switch (activeFilter) {
+			case 'favorites':
+				return plans.filter(plan => Boolean(plan.favorite));
+			case 'beginner':
+			case 'intermediate':
+			case 'advanced':
+				return plans.filter(plan => plan.difficulty === activeFilter);
+			case 'all':
+			default:
+				return plans;
+		}
+	}, [activeFilter, plans]);
+
+	const onRefresh = useCallback(async () => {
+		setRefreshing(true);
+		await plansQuery.refetch();
+		setRefreshing(false);
+	}, [plansQuery]);
+
+	const openPlanDetail = useCallback(
+		(planId: string) => {
+			navigation.navigate('PlanDetail', { planId });
+		},
+		[navigation],
+	);
+
+	const renderFilterItem = useCallback(
+		({ item }: { item: FilterOption }) => (
+			<Chip
+				label={item.label}
+				selected={activeFilter === item.key}
+				onPress={() => setActiveFilter(item.key)}
+				icon={item.key === 'favorites' ? 'star-outline' : undefined}
+			/>
+		),
+		[activeFilter],
+	);
+
+	const toggleFavorite = useCallback(
+		async (plan: Plan) => {
+			try {
+				await updatePlanMutation.mutateAsync({ id: plan.id, data: { favorite: !plan.favorite } });
+			} catch {
+				Toast.show({
+					type: 'error',
+					position: 'top',
+					text1: 'Islem basarisiz',
+					text2: 'Favori bilgisi guncellenemedi.',
+				});
+			}
+		},
+		[updatePlanMutation],
+	);
+
+	const togglePin = useCallback(
+		async (plan: Plan) => {
+			try {
+				await updatePlanMutation.mutateAsync({ id: plan.id, data: { pin: !plan.pin } });
+			} catch {
+				Toast.show({
+					type: 'error',
+					position: 'top',
+					text1: 'Islem basarisiz',
+					text2: 'Sabitleme bilgisi guncellenemedi.',
+				});
+			}
+		},
+		[updatePlanMutation],
+	);
+
+	const renderPlanItem = useCallback(
+		({ item }: { item: Plan }) => (
+			<PlanCard
+				plan={item}
+				onPress={openPlanDetail}
+				onToggleFavorite={toggleFavorite}
+				onTogglePin={togglePin}
+				onLongPress={setSelectedPlan}
+				actionsDisabled={updatePlanMutation.isPending || deletePlanMutation.isPending}
+				progress={0}
+			/>
+		),
+		[deletePlanMutation.isPending, openPlanDetail, toggleFavorite, togglePin, updatePlanMutation.isPending],
+	);
+
+	const handleDelete = useCallback(
+		(plan: Plan) => {
+			Alert.alert('Plani sil', 'Bu plani silmek istediginize emin misiniz?', [
+				{ text: 'Iptal', style: 'cancel' },
+				{
+					text: 'Sil',
+					style: 'destructive',
+					onPress: async () => {
+						try {
+							await deletePlanMutation.mutateAsync(plan.id);
+							setSelectedPlan(null);
+							Toast.show({
+								type: 'success',
+								position: 'top',
+								text1: 'Plan silindi',
+								text2: 'Plan listenizden kaldirildi.',
+							});
+						} catch {
+							Toast.show({
+								type: 'error',
+								position: 'top',
+								text1: 'Silme basarisiz',
+								text2: 'Plan silinemedi. Lutfen tekrar deneyin.',
+							});
+						}
+					},
 				},
-			},
-		]);
-	};
+			]);
+		},
+		[deletePlanMutation],
+	);
 
-	const renderPlan = ({ item }: { item: Plan }) => {
+	if (plansQuery.isLoading && !plansQuery.data) {
 		return (
-			<Card
-				style={styles.planCard}
-				onPress={() => navigation.navigate('PlanDetail', { planId: item.id })}
-			>
-				<Pressable onLongPress={() => handleDelete(item.id)} delayLongPress={400}>
-					<View style={styles.planRow}>
-						<View style={styles.planInfo}>
-							<Text style={styles.planTitle}>{item.title_tr || item.title_en}</Text>
-							<Text style={styles.planMeta}>
-								{item.total_duration_min}dk • {item.difficulty} • {item.focus_area}
-							</Text>
-						</View>
-						<Ionicons
-							name={item.favorite ? 'heart' : 'heart-outline'}
-							color={item.favorite ? colors.error : colors.textMuted}
-							size={20}
-						/>
-					</View>
-				</Pressable>
-			</Card>
+			<SafeAreaView style={styles.safeArea}>
+				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+				<View style={styles.loadingContent}>
+					{Array.from({ length: 3 }).map((_, index) => (
+						<SkeletonLoader key={`plans-skeleton-${index}`} width="100%" height={176} borderRadius={radius.lg} />
+					))}
+				</View>
+			</SafeAreaView>
 		);
-	};
-
-	if (plansQuery.isLoading) {
-		return <LoadingScreen message="Planlar yukleniyor..." />;
 	}
 
 	if (plansQuery.isError) {
-		return <ErrorView message="Planlar alinamadi." onRetry={plansQuery.refetch} />;
+		return (
+			<SafeAreaView style={styles.safeArea}>
+				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+				<View style={styles.errorWrap}>
+					<ErrorView
+						type="generic"
+						title="Planlar yuklenemedi"
+						description="Liste su anda getirilemiyor. Lutfen tekrar deneyin."
+						onRetry={() => {
+							void plansQuery.refetch();
+						}}
+					/>
+				</View>
+			</SafeAreaView>
+		);
 	}
 
-	const plans = Array.isArray(plansQuery.data) ? plansQuery.data : [];
-
 	return (
-		<View style={styles.container}>
-			{plans.length === 0 ? (
-				<View style={styles.emptyContainer}>
-					<Text style={styles.emptyTitle}>Henüz planiniz yok.</Text>
-					<Text style={styles.emptySubtitle}>Hemen olusturun!</Text>
+		<SafeAreaView style={styles.safeArea}>
+			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<View style={styles.container}>
+				<View style={styles.headerRow}>
+					<Text style={styles.title}>Planlarim</Text>
+					<Pressable style={styles.filterButton} accessibilityRole="button" accessibilityLabel="Filtre secenekleri">
+						<MaterialCommunityIcons name="filter-variant" size={22} color={colors.primary} />
+					</Pressable>
 				</View>
-			) : (
-				<FlatList
-					data={plans}
-					keyExtractor={item => item.id}
-					renderItem={renderPlan}
-					contentContainerStyle={styles.listContent}
-					refreshControl={<RefreshControl refreshing={plansQuery.isRefetching} onRefresh={plansQuery.refetch} />}
-				/>
-			)}
 
-			<Pressable style={styles.fab} onPress={() => navigation.navigate('CreatePlan')}>
-				<Ionicons name="add" size={28} color={colors.text} />
-			</Pressable>
-		</View>
+				<FlatList
+					horizontal
+					data={filterOptions}
+					keyExtractor={item => item.key}
+					showsHorizontalScrollIndicator={false}
+					contentContainerStyle={styles.filterList}
+					renderItem={renderFilterItem}
+					maxToRenderPerBatch={10}
+					windowSize={5}
+					removeClippedSubviews
+					getItemLayout={(_, index) => ({ length: 116, offset: 116 * index, index })}
+					ListHeaderComponent={<View />}
+					ListFooterComponent={<View style={styles.listFooterSpacer} />}
+				/>
+
+				<FlatList
+					data={filteredPlans}
+					keyExtractor={item => item.id}
+					contentContainerStyle={styles.listContent}
+					refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
+					renderItem={renderPlanItem}
+					maxToRenderPerBatch={10}
+					windowSize={5}
+					removeClippedSubviews
+					getItemLayout={(_, index) => ({ length: 186, offset: 186 * index, index })}
+					ListHeaderComponent={<View />}
+					ListFooterComponent={<View style={styles.listFooterBottom} />}
+					ListEmptyComponent={
+						<EmptyState
+							icon="calendar-plus"
+							title="Henuz plan olusturmadiniz"
+							description="Sag alttaki buton ile ilk planinizi olusturabilirsiniz."
+						/>
+					}
+				/>
+
+				<Pressable
+					style={styles.fab}
+					onPress={() => navigation.navigate('CreatePlan')}
+					accessibilityRole="button"
+					accessibilityLabel="Yeni plan olustur"
+				>
+					<MaterialCommunityIcons name="plus" size={28} color={colors.textOnPrimary} />
+				</Pressable>
+			</View>
+
+			<BottomSheet
+				visible={Boolean(selectedPlan)}
+				onClose={() => setSelectedPlan(null)}
+				title="Plan Islemleri"
+			>
+				<View style={styles.sheetActions}>
+					<Button
+						title={selectedPlan?.favorite ? 'Favorilerden Cikar' : 'Favorilere Ekle'}
+						onPress={() => {
+							if (selectedPlan) {
+								void toggleFavorite(selectedPlan);
+							}
+							setSelectedPlan(null);
+						}}
+						variant="ghost"
+						size="md"
+						fullWidth
+						icon="star-outline"
+						accessibilityLabel="Favori islemi"
+					/>
+					<Button
+						title={selectedPlan?.pin ? 'Sabitlemeyi Kaldir' : 'Sabitle'}
+						onPress={() => {
+							if (selectedPlan) {
+								void togglePin(selectedPlan);
+							}
+							setSelectedPlan(null);
+						}}
+						variant="ghost"
+						size="md"
+						fullWidth
+						icon="pin-outline"
+						accessibilityLabel="Sabitleme islemi"
+					/>
+					<Button
+						title="Plani Sil"
+						onPress={() => {
+							if (selectedPlan) {
+								handleDelete(selectedPlan);
+							}
+						}}
+						variant="danger"
+						size="md"
+						fullWidth
+						icon="delete-outline"
+						accessibilityLabel="Plani sil"
+					/>
+				</View>
+			</BottomSheet>
+		</SafeAreaView>
 	);
 };
 
 const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: colors.background,
+	},
 	container: {
 		flex: 1,
 		backgroundColor: colors.background,
 	},
-	listContent: {
-		padding: spacing.lg,
-		gap: spacing.md,
-		paddingBottom: spacing.xxl,
+	loadingContent: {
+		paddingHorizontal: spacing.base,
+		paddingTop: spacing.base,
+		gap: spacing.sm,
 	},
-	planCard: {
-		padding: spacing.md,
+	errorWrap: {
+		flex: 1,
+		justifyContent: 'center',
+		paddingHorizontal: spacing.base,
 	},
-	planRow: {
+	headerRow: {
+		paddingHorizontal: spacing.base,
+		paddingTop: spacing.sm,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 	},
-	planInfo: {
-		flex: 1,
-		marginRight: spacing.sm,
-		gap: spacing.xs,
-	},
-	planTitle: {
-		...typography.h3,
+	title: {
+		...typography.h2,
 		color: colors.text,
 	},
-	planMeta: {
-		...typography.bodySmall,
-		color: colors.textSecondary,
-	},
-	emptyContainer: {
-		flex: 1,
+	filterButton: {
+		width: 38,
+		height: 38,
+		borderRadius: radius.full,
+		backgroundColor: colors.primarySoft,
 		alignItems: 'center',
 		justifyContent: 'center',
+	},
+	filterList: {
+		paddingHorizontal: spacing.base,
+		paddingVertical: spacing.base,
 		gap: spacing.xs,
 	},
-	emptyTitle: {
-		...typography.h3,
-		color: colors.text,
+	listContent: {
+		paddingHorizontal: spacing.base,
+		paddingBottom: spacing.huge,
+		gap: spacing.sm,
 	},
-	emptySubtitle: {
-		...typography.body,
-		color: colors.textSecondary,
+	listFooterSpacer: {
+		width: spacing.xs,
+	},
+	listFooterBottom: {
+		height: spacing.xs,
 	},
 	fab: {
 		position: 'absolute',
-		right: spacing.lg,
-		bottom: spacing.lg,
-		width: 56,
-		height: 56,
-		borderRadius: 28,
+		right: spacing.base,
+		bottom: spacing.base,
+		width: 58,
+		height: 58,
+		borderRadius: radius.full,
 		backgroundColor: colors.primary,
 		alignItems: 'center',
 		justifyContent: 'center',
-		shadowColor: '#000000',
-		shadowOpacity: 0.3,
-		shadowOffset: { width: 0, height: 4 },
-		shadowRadius: 8,
-		elevation: 8,
+		...shadows.lg,
+	},
+	sheetActions: {
+		gap: spacing.sm,
+		paddingBottom: spacing.base,
 	},
 });
 

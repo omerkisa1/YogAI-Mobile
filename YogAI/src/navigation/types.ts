@@ -1,3 +1,6 @@
+import { NavigatorScreenParams } from '@react-navigation/native';
+import { Level } from '../shared/types/plan';
+
 export type AuthStackParamList = {
 	Login: undefined;
 	Register: undefined;
@@ -11,9 +14,14 @@ export type MainTabParamList = {
 };
 
 export type RootStackParamList = {
-	MainTabs: undefined;
+	MainTabs: NavigatorScreenParams<MainTabParamList> | undefined;
 	PlanDetail: { planId: string };
-	CreatePlan: undefined;
+	CreatePlan:
+		| {
+				presetLevel?: Level;
+				presetDuration?: number;
+		  }
+		| undefined;
 	EditProfile: undefined;
 	TrainingSession: { planId: string; sessionId: string };
 };

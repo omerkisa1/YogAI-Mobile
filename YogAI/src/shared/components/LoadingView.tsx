@@ -4,13 +4,14 @@ import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
-interface LoadingScreenProps {
+export interface LoadingViewProps {
 	message?: string;
+	fullScreen?: boolean;
 }
 
-const LoadingScreen = ({ message = 'Yukleniyor...' }: LoadingScreenProps) => {
+const LoadingView = ({ message = 'Yukleniyor...', fullScreen = false }: LoadingViewProps) => {
 	return (
-		<View style={styles.container}>
+		<View style={[styles.container, fullScreen && styles.fullScreen]}>
 			<ActivityIndicator size="large" color={colors.primary} />
 			<Text style={styles.message}>{message}</Text>
 		</View>
@@ -19,12 +20,14 @@ const LoadingScreen = ({ message = 'Yukleniyor...' }: LoadingScreenProps) => {
 
 const styles = StyleSheet.create({
 	container: {
-		flex: 1,
-		backgroundColor: colors.background,
 		alignItems: 'center',
 		justifyContent: 'center',
 		padding: spacing.lg,
 		gap: spacing.md,
+	},
+	fullScreen: {
+		flex: 1,
+		backgroundColor: colors.background,
 	},
 	message: {
 		...typography.bodySm,
@@ -32,4 +35,4 @@ const styles = StyleSheet.create({
 	},
 });
 
-export default LoadingScreen;
+export default LoadingView;

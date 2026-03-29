@@ -1,41 +1,65 @@
 import React, { ReactNode } from 'react';
 import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { radius, shadows, spacing } from '../../theme/spacing';
+
+export type CardVariant = 'default' | 'elevated' | 'outlined';
 
 interface CardProps {
 	children: ReactNode;
+	variant?: CardVariant;
 	style?: StyleProp<ViewStyle>;
 	onPress?: () => void;
+	accessibilityLabel?: string;
 }
 
-const Card = ({ children, style, onPress }: CardProps) => {
+const variantStyles: Record<CardVariant, ViewStyle> = {
+	default: {
+		backgroundColor: colors.surface,
+		borderColor: colors.borderLight,
+		...shadows.sm,
+	},
+	elevated: {
+		backgroundColor: colors.surfaceElevated,
+		borderColor: colors.borderLight,
+		...shadows.md,
+	},
+	outlined: {
+		backgroundColor: colors.surface,
+		borderColor: colors.border,
+		shadowOpacity: 0,
+		elevation: 0,
+	},
+};
+
+const Card = ({ children, variant = 'default', style, onPress, accessibilityLabel }: CardProps) => {
+	const variantStyle = variantStyles[variant];
+
 	if (onPress) {
 		return (
-			<Pressable style={({ pressed }) => [styles.base, style, pressed && styles.pressed]} onPress={onPress}>
+			<Pressable
+				style={({ pressed }) => [styles.base, variantStyle, pressed && styles.pressed, style]}
+				onPress={onPress}
+				accessibilityRole="button"
+				accessibilityLabel={accessibilityLabel}
+			>
 				{children}
 			</Pressable>
 		);
 	}
 
-	return <View style={[styles.base, style]}>{children}</View>;
+	return <View style={[styles.base, variantStyle, style]}>{children}</View>;
 };
 
 const styles = StyleSheet.create({
 	base: {
-		backgroundColor: colors.surface,
-		borderRadius: 16,
+		borderRadius: radius.lg,
 		borderWidth: 1,
-		borderColor: colors.border,
-		padding: spacing.md,
-		shadowColor: '#000000',
-		shadowOffset: { width: 0, height: 6 },
-		shadowOpacity: 0.25,
-		shadowRadius: 10,
-		elevation: 6,
+		padding: spacing.base,
 	},
 	pressed: {
-		opacity: 0.9,
+		opacity: 0.96,
+		transform: [{ scale: 0.99 }],
 	},
 });
 

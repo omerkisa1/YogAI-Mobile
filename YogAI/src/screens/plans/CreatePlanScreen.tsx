@@ -1,286 +1,488 @@
-import React from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
+	Animated,
+	Easing,
+	FlatList,
 	Pressable,
+	SafeAreaView,
 	ScrollView,
+	StatusBar,
 	StyleSheet,
 	Text,
 	View,
 } from 'react-native';
+import axios from 'axios';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useCreatePlan } from '../../features/plans/hooks/useCreatePlan';
 import Button from '../../shared/components/Button';
-import { AppLanguage, CreatePlanRequest, FocusArea, Injury, Level } from '../../shared/types/plan';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import Card from '../../shared/components/Card';
+import Chip from '../../shared/components/Chip';
+import ErrorView from '../../shared/components/ErrorView';
+import {
+	AppLanguage,
+	CreatePlanRequest,
+	FocusArea,
+	Injury,
+	Level,
+} from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
+import { colors } from '../../theme/colors';
+import { radius, spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreatePlan'>;
 
-const levels: Level[] = ['beginner', 'intermediate', 'advanced'];
-const focusAreas: FocusArea[] = ['full_body', 'legs', 'back', 'core', 'balance', 'flexibility', 'arms', 'hips'];
-const injuries: Injury[] = [
-	'knee_injury',
-	'ankle_injury',
-	'herniated_disc',
-	'low_back_pain',
-	'shoulder_injury',
-	'wrist_injury',
-	'neck_injury',
-	'groin_injury',
-	'hip_injury',
-];
-const languages: AppLanguage[] = ['tr', 'en'];
+interface LevelOption {
+	key: Level;
+	label: string;
+	description: string;
+	icon: string;
+}
 
-const CreatePlanScreen = ({ navigation }: Props) => {
+interface FocusOption {
+	key: FocusArea;
+	label: string;
+}
+
+interface InjuryOption {
+	key: Injury;
+	label: string;
+}
+
+const levelOptions: LevelOption[] = [
+	{ key: 'beginner', label: 'Baslangic', description: 'Yumusak akis', icon: 'leaf' },
+	{ key: 'intermediate', label: 'Orta', description: 'Denge ve guc', icon: 'tree' },
+	{ key: 'advanced', label: 'Ileri', description: 'Yuksek yogunluk', icon: 'fire' },
+];
+
+const durationOptions = [10, 15, 20, 25, 30, 45, 60] as const;
+
+const focusOptions: FocusOption[] = [
+	{ key: 'full_body', label: 'Tam Vucut' },
+	{ key: 'legs', label: 'Bacaklar' },
+	{ key: 'back', label: 'Sirt' },
+	{ key: 'core', label: 'Core' },
+	{ key: 'balance', label: 'Denge' },
+	{ key: 'flexibility', label: 'Esneklik' },
+	{ key: 'arms', label: 'Kollar' },
+	{ key: 'hips', label: 'Kalca' },
+];
+
+const injuryOptions: InjuryOption[] = [
+	{ key: 'knee_injury', label: 'Diz' },
+	{ key: 'ankle_injury', label: 'Ayak Bilegi' },
+	{ key: 'herniated_disc', label: 'Bel Fitigi' },
+	{ key: 'low_back_pain', label: 'Bel' },
+	{ key: 'shoulder_injury', label: 'Omuz' },
+	{ key: 'wrist_injury', label: 'Bilek' },
+	{ key: 'neck_injury', label: 'Boyun' },
+	{ key: 'groin_injury', label: 'Kasik' },
+	{ key: 'hip_injury', label: 'Kalca' },
+];
+
+const languageOptions: { key: AppLanguage; label: string }[] = [
+	{ key: 'tr', label: 'Turkce' },
+	{ key: 'en', label: 'English' },
+];
+
+const CreatePlanScreen = ({ navigation, route }: Props) => {
 	const createPlanMutation = useCreatePlan();
+	const pulseAnim = useRef(new Animated.Value(1)).current;
+	const [inlineValidationError, setInlineValidationError] = React.useState<string | null>(null);
+	const [showServerError, setShowServerError] = React.useState(false);
 
 	const { control, handleSubmit, watch, setValue } = useForm<CreatePlanRequest>({
 		defaultValues: {
-			level: 'beginner',
-			duration: 20,
+			level: route.params?.presetLevel ?? 'beginner',
+			duration: route.params?.presetDuration ?? 20,
 			focus_area: 'full_body',
 			injuries: [],
 			language: 'tr',
 		},
 	});
 
+	const selectedLevel = watch('level');
 	const selectedDuration = watch('duration');
+	const selectedFocus = watch('focus_area');
+	const selectedInjuries = watch('injuries');
+	const selectedLanguage = watch('language');
+
+	useEffect(() => {
+		if (route.params?.presetLevel) {
+			setValue('level', route.params.presetLevel);
+		}
+		if (route.params?.presetDuration) {
+			setValue('duration', route.params.presetDuration);
+		}
+	}, [route.params?.presetDuration, route.params?.presetLevel, setValue]);
+
+	useEffect(() => {
+		if (!createPlanMutation.isPending) {
+			pulseAnim.setValue(1);
+			return;
+		}
+
+		const animation = Animated.loop(
+			Animated.sequence([
+				Animated.timing(pulseAnim, {
+					toValue: 1.1,
+					duration: 720,
+					easing: Easing.inOut(Easing.ease),
+					useNativeDriver: true,
+				}),
+				Animated.timing(pulseAnim, {
+					toValue: 1,
+					duration: 720,
+					easing: Easing.inOut(Easing.ease),
+					useNativeDriver: true,
+				}),
+			]),
+		);
+
+		animation.start();
+
+		return () => {
+			animation.stop();
+		};
+	}, [createPlanMutation.isPending, pulseAnim]);
+
+	const inlineSuggestion = useMemo(
+		() => 'Odak alanini veya sureyi degistirerek tekrar deneyin.',
+		[],
+	);
 
 	const onSubmit = handleSubmit(async values => {
+		setInlineValidationError(null);
+		setShowServerError(false);
+
 		try {
 			const result = await createPlanMutation.mutateAsync(values);
-			if (!result.id) {
-				Toast.show({
-					type: 'success',
-					text1: 'Plan olusturuldu',
-					text2: 'Liste ekraninda plani goruntuleyebilirsiniz.',
-				});
-				navigation.goBack();
+			Toast.show({
+				type: 'success',
+				position: 'top',
+				text1: 'Plan olusturuldu',
+				text2: 'Plan detay ekranina yonlendiriliyorsunuz.',
+			});
+
+			if (result.id) {
+				navigation.replace('PlanDetail', { planId: result.id });
 				return;
 			}
-			navigation.replace('PlanDetail', { planId: result.id });
+
+			navigation.goBack();
 		} catch (error) {
+			if (axios.isAxiosError(error)) {
+				const status = error.response?.status;
+				const backendMessage =
+					(error.response?.data as { error?: string; message?: string } | undefined)?.error ||
+					(error.response?.data as { error?: string; message?: string } | undefined)?.message;
+
+				if (status === 400) {
+					setInlineValidationError(backendMessage ?? 'Secilen filtrelerle plan olusturulamadi.');
+					return;
+				}
+
+				if (status && status >= 500) {
+					setShowServerError(true);
+					return;
+				}
+			}
+
 			Toast.show({
 				type: 'error',
+				position: 'top',
 				text1: 'Plan olusturulamadi',
-				text2: error instanceof Error ? error.message : 'Bilinmeyen hata',
+				text2: 'Lutfen tekrar deneyin.',
 			});
 		}
 	});
 
+	const toggleInjury = (injury: Injury) => {
+		const exists = selectedInjuries.includes(injury);
+		const next = exists ? selectedInjuries.filter(item => item !== injury) : [...selectedInjuries, injury];
+		setValue('injuries', next, { shouldValidate: true });
+	};
+
 	return (
-		<ScrollView style={styles.container} contentContainerStyle={styles.content}>
-			<Text style={styles.title}>AI Plan Olustur</Text>
-
-			<Controller
-				control={control}
-				name="level"
-				render={({ field: { value, onChange } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Seviye</Text>
-						<View style={styles.rowWrap}>
-							{levels.map(level => (
+		<SafeAreaView style={styles.safeArea}>
+			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<ScrollView
+				style={styles.container}
+				contentContainerStyle={styles.content}
+				showsVerticalScrollIndicator={false}
+				keyboardShouldPersistTaps="handled"
+			>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Seviye Secimi</Text>
+					<View style={styles.levelGrid}>
+						{levelOptions.map(level => {
+							const selected = selectedLevel === level.key;
+							return (
 								<Pressable
-									key={level}
-									onPress={() => onChange(level)}
-									style={[styles.chip, value === level && styles.chipSelected]}
+									key={level.key}
+									onPress={() => setValue('level', level.key, { shouldValidate: true })}
+									style={[styles.levelCard, selected && styles.levelCardSelected]}
+									accessibilityRole="button"
+									accessibilityLabel={`${level.label} seviye sec`}
 								>
-									<Text style={[styles.chipText, value === level && styles.chipTextSelected]}>{level}</Text>
+									<MaterialCommunityIcons
+										name={level.icon}
+										size={24}
+										color={selected ? colors.primary : colors.textSecondary}
+									/>
+									<Text style={[styles.levelTitle, selected && styles.levelTitleSelected]}>{level.label}</Text>
+									<Text style={styles.levelDescription}>{level.description}</Text>
 								</Pressable>
-							))}
-						</View>
+							);
+						})}
 					</View>
-				)}
-			/>
+				</View>
 
-			<Controller
-				control={control}
-				name="duration"
-				render={({ field: { value, onChange } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Sure (dk)</Text>
-						<View style={styles.durationRow}>
-							<Pressable
-								style={styles.durationButton}
-								onPress={() => onChange(Math.max(10, value - 5))}
-							>
-								<Text style={styles.durationButtonText}>-</Text>
-							</Pressable>
-							<Text style={styles.durationText}>{selectedDuration}</Text>
-							<Pressable
-								style={styles.durationButton}
-								onPress={() => onChange(Math.min(60, value + 5))}
-							>
-								<Text style={styles.durationButtonText}>+</Text>
-							</Pressable>
-						</View>
-					</View>
-				)}
-			/>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Sure: {selectedDuration} dakika</Text>
+					<FlatList
+						horizontal
+						data={durationOptions}
+						keyExtractor={item => `duration-${item}`}
+						showsHorizontalScrollIndicator={false}
+						contentContainerStyle={styles.durationList}
+						maxToRenderPerBatch={10}
+						windowSize={5}
+						removeClippedSubviews
+						getItemLayout={(_, index) => ({ length: 72, offset: 72 * index, index })}
+						ListHeaderComponent={<View />}
+						ListFooterComponent={<View style={styles.durationFooter} />}
+						renderItem={({ item }) => (
+							<Chip
+								label={`${item}`}
+								selected={item === selectedDuration}
+								onPress={() => setValue('duration', item, { shouldValidate: true })}
+							/>
+						)}
+					/>
+				</View>
 
-			<Controller
-				control={control}
-				name="focus_area"
-				render={({ field: { value, onChange } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Odak Alani</Text>
-						<View style={styles.rowWrap}>
-							{focusAreas.map(area => (
-								<Pressable
-									key={area}
-									onPress={() => onChange(area)}
-									style={[styles.chip, value === area && styles.chipSelected]}
-								>
-									<Text style={[styles.chipText, value === area && styles.chipTextSelected]}>{area}</Text>
-								</Pressable>
-							))}
-						</View>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Odak Alani</Text>
+					<View style={styles.chipWrap}>
+						{focusOptions.map(focus => (
+							<Chip
+								key={focus.key}
+								label={focus.label}
+								selected={selectedFocus === focus.key}
+								onPress={() => setValue('focus_area', focus.key, { shouldValidate: true })}
+							/>
+						))}
 					</View>
-				)}
-			/>
+				</View>
 
-			<Controller
-				control={control}
-				name="injuries"
-				render={({ field: { value } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Sakatliklar</Text>
-						<View style={styles.rowWrap}>
-							{injuries.map(injury => {
-								const selected = value.includes(injury);
-								return (
-									<Pressable
-										key={injury}
-										onPress={() => {
-											const next = selected
-												? value.filter(item => item !== injury)
-												: [...value, injury];
-											setValue('injuries', next, { shouldValidate: true });
-										}}
-										style={[styles.chip, selected && styles.chipSelected]}
-									>
-										<Text style={[styles.chipText, selected && styles.chipTextSelected]}>{injury}</Text>
-									</Pressable>
-								);
-							})}
-						</View>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Sakatliklariniz (varsa)</Text>
+					<View style={styles.chipWrap}>
+						{injuryOptions.map(injury => (
+							<Chip
+								key={injury.key}
+								label={injury.label}
+								selected={selectedInjuries.includes(injury.key)}
+								onPress={() => toggleInjury(injury.key)}
+								tone="warning"
+							/>
+						))}
 					</View>
-				)}
-			/>
+				</View>
 
-			<Controller
-				control={control}
-				name="language"
-				render={({ field: { value, onChange } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Dil</Text>
-						<View style={styles.rowWrap}>
-							{languages.map(language => (
-								<Pressable
-									key={language}
-									onPress={() => onChange(language)}
-									style={[styles.chip, value === language && styles.chipSelected]}
-								>
-									<Text style={[styles.chipText, value === language && styles.chipTextSelected]}>
-										{language.toUpperCase()}
-									</Text>
-								</Pressable>
-							))}
-						</View>
+				<View style={styles.section}>
+					<Text style={styles.sectionTitle}>Dil</Text>
+					<View style={styles.languageRow}>
+						{languageOptions.map(language => {
+							const selected = selectedLanguage === language.key;
+							return (
+								<Button
+									key={language.key}
+									title={language.label}
+									onPress={() => setValue('language', language.key, { shouldValidate: true })}
+									variant={selected ? 'primary' : 'outline'}
+									size="md"
+									fullWidth
+									accessibilityLabel={`${language.label} sec`}
+								/>
+							);
+						})}
 					</View>
-				)}
-			/>
+				</View>
+
+				{inlineValidationError ? (
+					<Card variant="outlined" style={styles.inlineErrorCard}>
+						<View style={styles.inlineErrorHeader}>
+							<MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.error} />
+							<Text style={styles.inlineErrorTitle}>Plan olusturma hatasi</Text>
+						</View>
+						<Text style={styles.inlineErrorText}>{inlineValidationError}</Text>
+						<Text style={styles.inlineSuggestion}>{inlineSuggestion}</Text>
+					</Card>
+				) : null}
+
+				{showServerError ? (
+					<View style={styles.serverErrorWrap}>
+						<ErrorView
+							type="server"
+							title="Plan olusturulamadi"
+							description="AI servisinde gecici bir sorun olustu."
+							onRetry={() => {
+								void onSubmit();
+							}}
+						/>
+					</View>
+				) : null}
+
+				<Controller
+					control={control}
+					name="level"
+					render={() => (
+						<Button
+							title="AI ile Plan Olustur"
+							onPress={onSubmit}
+							variant="primary"
+							size="lg"
+							loading={createPlanMutation.isPending}
+							disabled={createPlanMutation.isPending}
+							fullWidth
+							accessibilityLabel="AI ile plan olustur"
+						/>
+					)}
+				/>
+			</ScrollView>
 
 			{createPlanMutation.isPending ? (
-				<Text style={styles.pendingText}>AI planinizi olusturuyor...</Text>
+				<View style={styles.overlay}>
+					<Animated.View style={[styles.overlayIconWrap, { transform: [{ scale: pulseAnim }] }]}>
+						<MaterialCommunityIcons name="flower-lotus" size={42} color={colors.primary} />
+					</Animated.View>
+					<Text style={styles.overlayTitle}>AI planinizi olusturuyor...</Text>
+					<Text style={styles.overlaySubtitle}>Bu islem 10-30 saniye surebilir</Text>
+				</View>
 			) : null}
-
-			<Button
-				label="Plan Olustur"
-				onPress={onSubmit}
-				loading={createPlanMutation.isPending}
-				disabled={createPlanMutation.isPending}
-			/>
-		</ScrollView>
+		</SafeAreaView>
 	);
 };
 
 const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: colors.background,
+	},
 	container: {
 		flex: 1,
 		backgroundColor: colors.background,
 	},
 	content: {
-		padding: spacing.lg,
+		paddingHorizontal: spacing.base,
+		paddingBottom: spacing.xxxl,
 		gap: spacing.lg,
-		paddingBottom: spacing.xxl,
-	},
-	title: {
-		...typography.h2,
-		color: colors.text,
 	},
 	section: {
 		gap: spacing.sm,
 	},
-	label: {
-		...typography.body,
+	sectionTitle: {
+		...typography.h4,
 		color: colors.text,
 	},
-	rowWrap: {
+	levelGrid: {
 		flexDirection: 'row',
-		flexWrap: 'wrap',
 		gap: spacing.sm,
 	},
-	chip: {
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
-		borderRadius: 999,
+	levelCard: {
+		flex: 1,
+		padding: spacing.base,
+		borderRadius: radius.lg,
 		borderWidth: 1,
 		borderColor: colors.border,
 		backgroundColor: colors.surface,
+		gap: spacing.xs,
 	},
-	chipSelected: {
+	levelCardSelected: {
 		borderColor: colors.primary,
-		backgroundColor: colors.primaryDark,
+		backgroundColor: colors.primarySoft,
 	},
-	chipText: {
-		...typography.bodySmall,
+	levelTitle: {
+		...typography.bodyMedium,
+		color: colors.text,
+	},
+	levelTitleSelected: {
+		color: colors.primaryDark,
+	},
+	levelDescription: {
+		...typography.caption,
 		color: colors.textSecondary,
 	},
-	chipTextSelected: {
-		color: colors.text,
+	durationList: {
+		gap: spacing.xs,
 	},
-	durationRow: {
+	durationFooter: {
+		width: spacing.xs,
+	},
+	chipWrap: {
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		gap: spacing.xs,
+	},
+	languageRow: {
+		flexDirection: 'row',
+		gap: spacing.sm,
+	},
+	inlineErrorCard: {
+		backgroundColor: '#FFF0EF',
+		borderColor: '#FFD1CE',
+	},
+	inlineErrorHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		gap: spacing.md,
+		gap: spacing.xs,
+		marginBottom: spacing.xs,
 	},
-	durationButton: {
-		width: 44,
-		height: 44,
-		borderRadius: 22,
-		backgroundColor: colors.surface,
-		borderWidth: 1,
-		borderColor: colors.border,
-		alignItems: 'center',
-		justifyContent: 'center',
+	inlineErrorTitle: {
+		...typography.bodySmMedium,
+		color: colors.error,
 	},
-	durationButtonText: {
-		...typography.h2,
+	inlineErrorText: {
+		...typography.bodySm,
 		color: colors.text,
 	},
-	durationText: {
-		...typography.h2,
-		color: colors.primaryLight,
-		minWidth: 48,
-		textAlign: 'center',
+	inlineSuggestion: {
+		...typography.caption,
+		color: colors.textSecondary,
+		marginTop: spacing.xs,
 	},
-	pendingText: {
-		...typography.bodySmall,
-		color: colors.warning,
+	serverErrorWrap: {
+		marginBottom: spacing.sm,
+	},
+	overlay: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: 'rgba(16, 16, 16, 0.45)',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: spacing.xl,
+	},
+	overlayIconWrap: {
+		width: 92,
+		height: 92,
+		borderRadius: radius.full,
+		backgroundColor: colors.surface,
+		alignItems: 'center',
+		justifyContent: 'center',
+		marginBottom: spacing.base,
+	},
+	overlayTitle: {
+		...typography.h4,
+		color: colors.textOnPrimary,
+		marginBottom: spacing.xs,
+	},
+	overlaySubtitle: {
+		...typography.bodySm,
+		color: colors.surface,
 		textAlign: 'center',
 	},
 });

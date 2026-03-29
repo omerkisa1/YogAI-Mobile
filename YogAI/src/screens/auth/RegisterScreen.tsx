@@ -1,24 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-	ActivityIndicator,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
+	ScrollView,
+	StatusBar,
 	StyleSheet,
 	Text,
-	TextInput,
 	View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import Button from '../../shared/components/Button';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
+import ErrorView from '../../shared/components/ErrorView';
+import Input from '../../shared/components/Input';
 import { AuthStackParamList } from '../../navigation/types';
+import { colors } from '../../theme/colors';
+import { radius, spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -29,30 +32,60 @@ interface RegisterFormValues {
 	confirmPassword: string;
 }
 
-const mapFirebaseErrorToTurkish = (error: unknown) => {
+interface FirebaseErrorMapping {
+	text1: string;
+	text2: string;
+	type: 'network' | 'generic';
+}
+
+const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 	const code = (error as FirebaseAuthTypes.NativeFirebaseAuthError | undefined)?.code;
 
 	switch (code) {
 		case 'auth/email-already-in-use':
-			return 'Bu email zaten kullaniliyor';
+			return {
+				text1: 'Kayit basarisiz',
+				text2: 'Bu email zaten kullanimda.',
+				type: 'generic',
+			};
 		case 'auth/weak-password':
-			return 'Sifre en az 6 karakter olmalidir';
+			return {
+				text1: 'Zayif sifre',
+				text2: 'Sifre en az 6 karakter olmali.',
+				type: 'generic',
+			};
 		case 'auth/invalid-email':
-			return 'Gecersiz email adresi';
+			return {
+				text1: 'Gecersiz email',
+				text2: 'Lutfen gecerli bir email adresi girin.',
+				type: 'generic',
+			};
 		case 'auth/network-request-failed':
-			return 'Internet baglantinizi kontrol edin';
+			return {
+				text1: 'Baglanti hatasi',
+				text2: 'Internet baglantinizi kontrol edin.',
+				type: 'network',
+			};
 		default:
-			return 'Kayit islemi basarisiz';
+			return {
+				text1: 'Kayit basarisiz',
+				text2: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+				type: 'generic',
+			};
 	}
 };
 
 const RegisterScreen = ({ navigation }: Props) => {
 	const { registerWithEmail, signInWithGoogle, isSubmitting } = useAuth();
+	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+	const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
+	const [hasNetworkError, setHasNetworkError] = useState(false);
+
 	const {
 		control,
 		handleSubmit,
 		watch,
-		formState: { isSubmitting: isFormSubmitting },
+		formState: { errors, isSubmitting: isFormSubmitting },
 	} = useForm<RegisterFormValues>({
 		defaultValues: {
 			displayName: '',
@@ -60,189 +93,268 @@ const RegisterScreen = ({ navigation }: Props) => {
 			password: '',
 			confirmPassword: '',
 		},
+		mode: 'onSubmit',
 	});
 
 	const passwordValue = watch('password');
+	const loading = isSubmitting || isFormSubmitting;
 
 	const onSubmit = handleSubmit(async values => {
+		setHasNetworkError(false);
 		try {
 			await registerWithEmail(values.email.trim(), values.password, values.displayName.trim());
 			Toast.show({
 				type: 'success',
+				position: 'top',
 				text1: 'Kayit basarili',
 				text2: 'Hesabiniz olusturuldu.',
 			});
 		} catch (error) {
+			const mappedError = mapFirebaseErrorToTurkish(error);
+			if (mappedError.type === 'network') {
+				setHasNetworkError(true);
+			}
+
 			Toast.show({
 				type: 'error',
-				text1: 'Kayit basarisiz',
-				text2: mapFirebaseErrorToTurkish(error),
+				position: 'top',
+				text1: mappedError.text1,
+				text2: mappedError.text2,
 			});
 		}
 	});
 
 	const onGoogleRegister = async () => {
+		setHasNetworkError(false);
 		try {
 			await signInWithGoogle();
 		} catch (error) {
+			const mappedError = mapFirebaseErrorToTurkish(error);
+			if (mappedError.type === 'network') {
+				setHasNetworkError(true);
+			}
+
 			Toast.show({
 				type: 'error',
-				text1: 'Google kayit basarisiz',
-				text2: mapFirebaseErrorToTurkish(error),
+				position: 'top',
+				text1: mappedError.text1,
+				text2: mappedError.text2,
 			});
 		}
 	};
 
-	const loading = isSubmitting || isFormSubmitting;
-
 	return (
-		<KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-			<View style={styles.content}>
-				<Text style={styles.title}>YogAI</Text>
-				<Text style={styles.subtitle}>Hesap Olustur</Text>
-
-				<Controller
-					name="displayName"
-					control={control}
-					rules={{
-						required: 'Ad Soyad zorunlu',
-						minLength: { value: 2, message: 'En az 2 karakter olmali' },
-					}}
-					render={({ field: { onChange, value }, fieldState: { error } }) => (
-						<View style={styles.inputGroup}>
-							<Text style={styles.label}>Ad Soyad</Text>
-							<TextInput
-								style={styles.input}
-								onChangeText={onChange}
-								value={value}
-								placeholder="Ad Soyad"
-								placeholderTextColor={colors.textMuted}
-							/>
-							{error ? <Text style={styles.error}>{error.message}</Text> : null}
-						</View>
-					)}
-				/>
-
-				<Controller
-					name="email"
-					control={control}
-					rules={{
-						required: 'Email zorunlu',
-						pattern: {
-							value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-							message: 'Gecerli email girin',
-						},
-					}}
-					render={({ field: { onChange, value }, fieldState: { error } }) => (
-						<View style={styles.inputGroup}>
-							<Text style={styles.label}>Email</Text>
-							<TextInput
-								style={styles.input}
-								autoCapitalize="none"
-								keyboardType="email-address"
-								onChangeText={onChange}
-								value={value}
-								placeholder="ornek@email.com"
-								placeholderTextColor={colors.textMuted}
-							/>
-							{error ? <Text style={styles.error}>{error.message}</Text> : null}
-						</View>
-					)}
-				/>
-
-				<Controller
-					name="password"
-					control={control}
-					rules={{
-						required: 'Sifre zorunlu',
-						minLength: { value: 6, message: 'En az 6 karakter olmali' },
-					}}
-					render={({ field: { onChange, value }, fieldState: { error } }) => (
-						<View style={styles.inputGroup}>
-							<Text style={styles.label}>Sifre</Text>
-							<TextInput
-								style={styles.input}
-								secureTextEntry
-								onChangeText={onChange}
-								value={value}
-								placeholder="******"
-								placeholderTextColor={colors.textMuted}
-							/>
-							{error ? <Text style={styles.error}>{error.message}</Text> : null}
-						</View>
-					)}
-				/>
-
-				<Controller
-					name="confirmPassword"
-					control={control}
-					rules={{
-						required: 'Sifre tekrari zorunlu',
-						validate: value => value === passwordValue || 'Sifreler eslesmiyor',
-					}}
-					render={({ field: { onChange, value }, fieldState: { error } }) => (
-						<View style={styles.inputGroup}>
-							<Text style={styles.label}>Sifre Tekrar</Text>
-							<TextInput
-								style={styles.input}
-								secureTextEntry
-								onChangeText={onChange}
-								value={value}
-								placeholder="******"
-								placeholderTextColor={colors.textMuted}
-							/>
-							{error ? <Text style={styles.error}>{error.message}</Text> : null}
-						</View>
-					)}
-				/>
-
-				<Button label="Kayit Ol" onPress={onSubmit} loading={loading} />
-
-				<View style={styles.separatorRow}>
-					<View style={styles.separatorLine} />
-					<Text style={styles.separatorText}>veya</Text>
-					<View style={styles.separatorLine} />
-				</View>
-
-				<Pressable
-					onPress={onGoogleRegister}
-					disabled={loading}
-					style={({ pressed }) => [styles.googleButton, pressed && styles.pressed, loading && styles.disabled]}
+		<SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<KeyboardAvoidingView
+				style={styles.keyboardAvoid}
+				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+			>
+				<ScrollView
+					contentContainerStyle={styles.scrollContent}
+					keyboardShouldPersistTaps="handled"
+					showsVerticalScrollIndicator={false}
 				>
-					{loading ? <ActivityIndicator color="#1F1F1F" /> : <Text style={styles.googleText}>Google ile Kayit Ol</Text>}
-				</Pressable>
+					{hasNetworkError ? (
+						<View style={styles.errorBox}>
+							<ErrorView
+								type="network"
+								onRetry={() => {
+									setHasNetworkError(false);
+									void onSubmit();
+								}}
+							/>
+						</View>
+					) : null}
 
-				<Pressable onPress={() => navigation.navigate('Login')} style={styles.linkContainer}>
-					<Text style={styles.linkText}>Zaten hesabin var mi? Giris yap</Text>
-				</Pressable>
-			</View>
-		</KeyboardAvoidingView>
+					<View style={styles.formSection}>
+						<Text style={styles.title}>Hesap Olustur</Text>
+						<Text style={styles.subtitle}>Yeni hesabinizla YogAI dunyasina katilin</Text>
+
+						<Controller
+							name="displayName"
+							control={control}
+							rules={{
+								required: 'Ad Soyad zorunlu',
+								minLength: {
+									value: 2,
+									message: 'Ad Soyad en az 2 karakter olmali',
+								},
+							}}
+							render={({ field: { value, onChange } }) => (
+								<Input
+									label="Ad Soyad"
+									placeholder="Ad Soyad"
+									value={value}
+									onChangeText={onChange}
+									error={errors.displayName?.message}
+									icon="account-outline"
+									autoCapitalize="words"
+									textContentType="name"
+									accessibilityLabel="Ad Soyad"
+								/>
+							)}
+						/>
+
+						<Controller
+							name="email"
+							control={control}
+							rules={{
+								required: 'Email zorunlu',
+								pattern: {
+									value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+									message: 'Gecerli email adresi girin',
+								},
+							}}
+							render={({ field: { value, onChange } }) => (
+								<Input
+									label="Email"
+									placeholder="ornek@email.com"
+									value={value}
+									onChangeText={onChange}
+									error={errors.email?.message}
+									icon="email-outline"
+									keyboardType="email-address"
+									autoCapitalize="none"
+									textContentType="emailAddress"
+									accessibilityLabel="Email"
+								/>
+							)}
+						/>
+
+						<Controller
+							name="password"
+							control={control}
+							rules={{
+								required: 'Sifre zorunlu',
+								minLength: {
+									value: 6,
+									message: 'Sifre en az 6 karakter olmali',
+								},
+							}}
+							render={({ field: { value, onChange } }) => (
+								<Input
+									label="Sifre"
+									placeholder="Sifrenizi girin"
+									value={value}
+									onChangeText={onChange}
+									error={errors.password?.message}
+									icon="lock-outline"
+									secureTextEntry={!isPasswordVisible}
+									rightIcon={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+									onRightIconPress={() => setIsPasswordVisible(prev => !prev)}
+									accessibilityLabel="Sifre"
+								/>
+							)}
+						/>
+
+						<Controller
+							name="confirmPassword"
+							control={control}
+							rules={{
+								required: 'Sifre tekrari zorunlu',
+								validate: value => value === passwordValue || 'Sifreler eslesmiyor',
+							}}
+							render={({ field: { value, onChange } }) => (
+								<Input
+									label="Sifre Tekrar"
+									placeholder="Sifrenizi tekrar girin"
+									value={value}
+									onChangeText={onChange}
+									error={errors.confirmPassword?.message}
+									icon="lock-check-outline"
+									secureTextEntry={!isConfirmPasswordVisible}
+									rightIcon={isConfirmPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
+									onRightIconPress={() => setIsConfirmPasswordVisible(prev => !prev)}
+									accessibilityLabel="Sifre tekrar"
+								/>
+							)}
+						/>
+
+						<Button
+							title="Kayit Ol"
+							onPress={onSubmit}
+							variant="primary"
+							size="lg"
+							loading={loading}
+							disabled={loading}
+							fullWidth
+							accessibilityLabel="Kayit ol"
+						/>
+
+						<View style={styles.separatorRow}>
+							<View style={styles.separatorLine} />
+							<Text style={styles.separatorText}>veya</Text>
+							<View style={styles.separatorLine} />
+						</View>
+
+						<Button
+							title="Google ile Kayit Ol"
+							onPress={onGoogleRegister}
+							variant="outline"
+							size="lg"
+							icon="google"
+							loading={loading}
+							disabled={loading}
+							fullWidth
+							accessibilityLabel="Google ile kayit ol"
+						/>
+
+						<View style={styles.loginRow}>
+							<Text style={styles.loginHint}>Zaten hesabin var mi?</Text>
+							<Pressable
+								onPress={() => navigation.navigate('Login')}
+								style={styles.loginPressable}
+								accessibilityRole="button"
+								accessibilityLabel="Giris yap ekranina git"
+							>
+								<Text style={styles.loginAction}>Giris Yap</Text>
+							</Pressable>
+						</View>
+					</View>
+				</ScrollView>
+			</KeyboardAvoidingView>
+		</SafeAreaView>
 	);
 };
 
 const styles = StyleSheet.create({
-	container: {
+	safeArea: {
 		flex: 1,
 		backgroundColor: colors.background,
-		justifyContent: 'center',
 	},
-	content: {
-		padding: spacing.lg,
-		gap: spacing.md,
+	keyboardAvoid: {
+		flex: 1,
+	},
+	scrollContent: {
+		paddingHorizontal: spacing.base,
+		paddingBottom: spacing.huge,
+	},
+	formSection: {
+		backgroundColor: colors.surface,
+		borderRadius: radius.xl,
+		paddingHorizontal: spacing.base,
+		paddingTop: spacing.lg,
+		paddingBottom: spacing.xl,
+		marginTop: spacing.sm,
+		borderWidth: 1,
+		borderColor: colors.borderLight,
 	},
 	title: {
-		...typography.h1,
+		...typography.h2,
 		color: colors.text,
+		marginBottom: spacing.xs,
 	},
 	subtitle: {
-		...typography.body,
+		...typography.bodySm,
 		color: colors.textSecondary,
-		marginBottom: spacing.md,
+		marginBottom: spacing.base,
 	},
 	separatorRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: spacing.sm,
+		marginVertical: spacing.base,
 	},
 	separatorLine: {
 		flex: 1,
@@ -253,50 +365,26 @@ const styles = StyleSheet.create({
 		...typography.caption,
 		color: colors.textMuted,
 	},
-	googleButton: {
-		backgroundColor: '#FFFFFF',
-		borderRadius: 12,
-		minHeight: 48,
+	loginRow: {
+		flexDirection: 'row',
 		justifyContent: 'center',
 		alignItems: 'center',
+		marginTop: spacing.lg,
 	},
-	googleText: {
-		...typography.button,
-		color: '#1F1F1F',
-	},
-	pressed: {
-		opacity: 0.9,
-	},
-	disabled: {
-		opacity: 0.6,
-	},
-	inputGroup: {
-		gap: spacing.xs,
-	},
-	label: {
-		...typography.bodySmall,
+	loginHint: {
+		...typography.bodySm,
 		color: colors.textSecondary,
 	},
-	input: {
-		borderWidth: 1,
-		borderColor: colors.border,
-		borderRadius: 12,
-		backgroundColor: colors.surface,
-		color: colors.text,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
+	loginPressable: {
+		marginLeft: spacing.xs,
 	},
-	error: {
-		...typography.caption,
-		color: colors.error,
+	loginAction: {
+		...typography.bodySmMedium,
+		color: colors.primary,
 	},
-	linkContainer: {
-		alignSelf: 'center',
+	errorBox: {
 		marginTop: spacing.sm,
-	},
-	linkText: {
-		...typography.bodySmall,
-		color: colors.primaryLight,
+		marginBottom: spacing.base,
 	},
 });
 

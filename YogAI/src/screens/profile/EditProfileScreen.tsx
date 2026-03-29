@@ -1,278 +1,401 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+	KeyboardAvoidingView,
+	Platform,
+	Pressable,
+	SafeAreaView,
+	ScrollView,
+	StatusBar,
+	StyleSheet,
+	Text,
+	View,
+} from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useProfile, useUpdateProfile } from '../../features/profile/hooks/useProfile';
 import Button from '../../shared/components/Button';
+import Chip from '../../shared/components/Chip';
 import ErrorView from '../../shared/components/ErrorView';
-import LoadingScreen from '../../shared/components/LoadingScreen';
+import Input from '../../shared/components/Input';
+import LoadingView from '../../shared/components/LoadingView';
+import { RootStackParamList } from '../../navigation/types';
+import { colors } from '../../theme/colors';
+import { radius, spacing } from '../../theme/spacing';
+import { typography } from '../../theme/typography';
 import { Goal, Profile } from '../../shared/types/profile';
 import { AppLanguage, Injury, Level } from '../../shared/types/plan';
-import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
-import { typography } from '../../theme/typography';
-import { RootStackParamList } from '../../navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProfile'>;
 
-const levelOptions: Level[] = ['beginner', 'intermediate', 'advanced'];
-const languageOptions: AppLanguage[] = ['tr', 'en'];
-const goalOptions: Goal[] = ['flexibility', 'stress_relief', 'strength', 'balance', 'mobility', 'posture'];
-const injuryOptions: Injury[] = [
-	'knee_injury',
-	'ankle_injury',
-	'herniated_disc',
-	'low_back_pain',
-	'shoulder_injury',
-	'wrist_injury',
-	'neck_injury',
-	'groin_injury',
-	'hip_injury',
+interface ProfileFormValues {
+	display_name: string;
+	age: number;
+	level: Level;
+	goals: Goal[];
+	injuries: Injury[];
+	preferred_language: AppLanguage;
+	gender: Profile['gender'];
+}
+
+const levelOptions: { key: Level; label: string; icon: string }[] = [
+	{ key: 'beginner', label: 'Baslangic', icon: 'leaf' },
+	{ key: 'intermediate', label: 'Orta', icon: 'tree' },
+	{ key: 'advanced', label: 'Ileri', icon: 'fire' },
+];
+
+const goalOptions: { key: Goal; label: string }[] = [
+	{ key: 'flexibility', label: 'Esneklik' },
+	{ key: 'strength', label: 'Guc' },
+	{ key: 'balance', label: 'Denge' },
+	{ key: 'stress_relief', label: 'Stres Azaltma' },
+	{ key: 'mobility', label: 'Mobilite' },
+	{ key: 'posture', label: 'Postur' },
+];
+
+const injuryOptions: { key: Injury; label: string }[] = [
+	{ key: 'knee_injury', label: 'Diz' },
+	{ key: 'ankle_injury', label: 'Ayak Bilegi' },
+	{ key: 'herniated_disc', label: 'Bel Fitigi' },
+	{ key: 'low_back_pain', label: 'Bel' },
+	{ key: 'shoulder_injury', label: 'Omuz' },
+	{ key: 'wrist_injury', label: 'Bilek' },
+	{ key: 'neck_injury', label: 'Boyun' },
+	{ key: 'groin_injury', label: 'Kasik' },
+	{ key: 'hip_injury', label: 'Kalca' },
+];
+
+const languageOptions: { key: AppLanguage; label: string }[] = [
+	{ key: 'tr', label: 'TR' },
+	{ key: 'en', label: 'EN' },
 ];
 
 const EditProfileScreen = ({ navigation }: Props) => {
 	const profileQuery = useProfile();
 	const updateMutation = useUpdateProfile();
 
-	const { control, handleSubmit, reset, setValue } = useForm<Profile>({
+	const {
+		control,
+		handleSubmit,
+		reset,
+		setValue,
+		watch,
+		formState: { errors },
+	} = useForm<ProfileFormValues>({
 		defaultValues: {
 			display_name: '',
 			age: 18,
-			gender: 'prefer_not_to_say',
 			level: 'beginner',
 			goals: [],
 			injuries: [],
 			preferred_language: 'tr',
+			gender: 'prefer_not_to_say',
 		},
 	});
 
+	const selectedLevel = watch('level');
+	const selectedGoals = watch('goals');
+	const selectedInjuries = watch('injuries');
+	const selectedLanguage = watch('preferred_language');
+
 	useEffect(() => {
-		if (profileQuery.data) {
-			reset(profileQuery.data);
+		if (!profileQuery.data) {
+			return;
 		}
+
+		reset({
+			display_name: profileQuery.data.display_name,
+			age: profileQuery.data.age,
+			gender: profileQuery.data.gender,
+			level: profileQuery.data.level,
+			goals: profileQuery.data.goals,
+			injuries: profileQuery.data.injuries,
+			preferred_language: profileQuery.data.preferred_language,
+		});
 	}, [profileQuery.data, reset]);
 
+	const onSubmit = useCallback(
+		handleSubmit(async values => {
+			try {
+				await updateMutation.mutateAsync(values);
+				Toast.show({
+					type: 'success',
+					position: 'top',
+					text1: 'Profil guncellendi',
+					text2: 'Degisiklikleriniz kaydedildi.',
+				});
+				navigation.goBack();
+			} catch {
+				Toast.show({
+					type: 'error',
+					position: 'top',
+					text1: 'Kaydetme basarisiz',
+					text2: 'Lutfen tekrar deneyin.',
+				});
+			}
+		}),
+		[handleSubmit, navigation, updateMutation],
+	);
+
+	useLayoutEffect(() => {
+		navigation.setOptions({
+			headerRight: () => (
+				<Pressable
+					onPress={onSubmit}
+					disabled={updateMutation.isPending}
+					accessibilityRole="button"
+					accessibilityLabel="Profili kaydet"
+				>
+					<Text style={styles.headerSave}>Kaydet</Text>
+				</Pressable>
+			),
+		});
+	}, [navigation, onSubmit, updateMutation.isPending]);
+
 	if (profileQuery.isLoading) {
-		return <LoadingScreen message="Profil bilgisi getiriliyor..." />;
+		return (
+			<SafeAreaView style={styles.safeArea}>
+				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+				<LoadingView message="Profil bilgileri yukleniyor..." fullScreen />
+			</SafeAreaView>
+		);
 	}
 
 	if (profileQuery.isError || !profileQuery.data) {
-		return <ErrorView message="Profil verisi alinamadi." onRetry={profileQuery.refetch} />;
+		return (
+			<SafeAreaView style={styles.safeArea}>
+				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+				<View style={styles.errorWrap}>
+					<ErrorView
+						type="generic"
+						title="Profil bilgisi alinamadi"
+						description="Lutfen tekrar deneyin."
+						onRetry={() => {
+							void profileQuery.refetch();
+						}}
+					/>
+				</View>
+			</SafeAreaView>
+		);
 	}
 
-	const onSubmit = handleSubmit(async values => {
-		try {
-			await updateMutation.mutateAsync(values);
-			Toast.show({
-				type: 'success',
-				text1: 'Profil kaydedildi',
-			});
-			navigation.goBack();
-		} catch (error) {
-			Toast.show({
-				type: 'error',
-				text1: 'Kaydetme basarisiz',
-				text2: error instanceof Error ? error.message : 'Bilinmeyen hata',
-			});
-		}
-	});
-
 	return (
-		<ScrollView style={styles.container} contentContainerStyle={styles.content}>
-			<Controller
-				control={control}
-				name="display_name"
-				rules={{ required: 'Ad soyad zorunlu' }}
-				render={({ field: { value, onChange }, fieldState: { error } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Ad</Text>
-						<TextInput
-							style={styles.input}
-							value={value}
-							onChangeText={onChange}
-							placeholder="Adinizi girin"
-							placeholderTextColor={colors.textMuted}
-						/>
-						{error ? <Text style={styles.error}>{error.message}</Text> : null}
-					</View>
-				)}
-			/>
+		<SafeAreaView style={styles.safeArea}>
+			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<KeyboardAvoidingView
+				style={styles.keyboardAvoid}
+				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+			>
+				<ScrollView
+					style={styles.container}
+					contentContainerStyle={styles.content}
+					keyboardShouldPersistTaps="handled"
+					showsVerticalScrollIndicator={false}
+				>
+					<Controller
+						name="display_name"
+						control={control}
+						rules={{ required: 'Ad Soyad zorunlu', minLength: { value: 2, message: 'Minimum 2 karakter' } }}
+						render={({ field: { value, onChange } }) => (
+							<Input
+								label="Ad Soyad"
+								placeholder="Ad Soyad"
+								value={value}
+								onChangeText={onChange}
+								error={errors.display_name?.message}
+								icon="account-outline"
+								autoCapitalize="words"
+								accessibilityLabel="Ad Soyad"
+							/>
+						)}
+					/>
 
-			<Controller
-				control={control}
-				name="age"
-				render={({ field: { value, onChange } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Yas</Text>
-						<TextInput
-							style={styles.input}
-							value={String(value)}
-							keyboardType="numeric"
-							onChangeText={text => onChange(Number(text) || 0)}
-							placeholder="Yas"
-							placeholderTextColor={colors.textMuted}
-						/>
-					</View>
-				)}
-			/>
+					<Controller
+						name="age"
+						control={control}
+						rules={{
+							min: { value: 5, message: 'Gecerli bir yas girin' },
+							max: { value: 120, message: 'Gecerli bir yas girin' },
+						}}
+						render={({ field: { value, onChange } }) => (
+							<Input
+								label="Yas"
+								placeholder="Yas"
+								value={`${value ?? ''}`}
+								onChangeText={text => onChange(Number(text.replace(/[^0-9]/g, '')) || 0)}
+								error={errors.age?.message}
+								icon="calendar-account-outline"
+								keyboardType="number-pad"
+								accessibilityLabel="Yas"
+							/>
+						)}
+					/>
 
-			<Controller
-				control={control}
-				name="level"
-				render={({ field: { value, onChange } }) => (
 					<View style={styles.section}>
-						<Text style={styles.label}>Seviye</Text>
-						<View style={styles.wrap}>
-							{levelOptions.map(option => (
-								<Pressable
-									key={option}
-									onPress={() => onChange(option)}
-									style={[styles.chip, value === option && styles.chipSelected]}
-								>
-									<Text style={[styles.chipText, value === option && styles.chipTextSelected]}>{option}</Text>
-								</Pressable>
-							))}
-						</View>
-					</View>
-				)}
-			/>
-
-			<Controller
-				control={control}
-				name="goals"
-				render={({ field: { value } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Hedefler</Text>
-						<View style={styles.wrap}>
-							{goalOptions.map(option => {
-								const selected = value.includes(option);
+						<Text style={styles.sectionTitle}>Seviye</Text>
+						<View style={styles.levelGrid}>
+							{levelOptions.map(level => {
+								const selected = selectedLevel === level.key;
 								return (
 									<Pressable
-										key={option}
-										onPress={() => {
-											const next = selected ? value.filter(v => v !== option) : [...value, option];
-											setValue('goals', next, { shouldValidate: true });
-										}}
-										style={[styles.chip, selected && styles.chipSelected]}
+										key={level.key}
+										onPress={() => setValue('level', level.key, { shouldValidate: true })}
+										style={[styles.levelCard, selected && styles.levelCardSelected]}
+										accessibilityRole="button"
+										accessibilityLabel={`${level.label} seviye sec`}
 									>
-										<Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option}</Text>
+										<MaterialCommunityIcons
+											name={level.icon}
+											size={22}
+											color={selected ? colors.primary : colors.textSecondary}
+										/>
+										<Text style={[styles.levelLabel, selected && styles.levelLabelSelected]}>{level.label}</Text>
 									</Pressable>
 								);
 							})}
 						</View>
 					</View>
-				)}
-			/>
 
-			<Controller
-				control={control}
-				name="injuries"
-				render={({ field: { value } }) => (
 					<View style={styles.section}>
-						<Text style={styles.label}>Sakatliklar</Text>
-						<View style={styles.wrap}>
-							{injuryOptions.map(option => {
-								const selected = value.includes(option);
-								return (
-									<Pressable
-										key={option}
-										onPress={() => {
-											const next = selected ? value.filter(v => v !== option) : [...value, option];
-											setValue('injuries', next, { shouldValidate: true });
-										}}
-										style={[styles.chip, selected && styles.chipSelected]}
-									>
-										<Text style={[styles.chipText, selected && styles.chipTextSelected]}>{option}</Text>
-									</Pressable>
-								);
-							})}
-						</View>
-					</View>
-				)}
-			/>
-
-			<Controller
-				control={control}
-				name="preferred_language"
-				render={({ field: { value, onChange } }) => (
-					<View style={styles.section}>
-						<Text style={styles.label}>Dil</Text>
-						<View style={styles.wrap}>
-							{languageOptions.map(option => (
-								<Pressable
-									key={option}
-									onPress={() => onChange(option)}
-									style={[styles.chip, value === option && styles.chipSelected]}
-								>
-									<Text style={[styles.chipText, value === option && styles.chipTextSelected]}>
-										{option.toUpperCase()}
-									</Text>
-								</Pressable>
+						<Text style={styles.sectionTitle}>Hedefler</Text>
+						<View style={styles.chipWrap}>
+							{goalOptions.map(goal => (
+								<Chip
+									key={goal.key}
+									label={goal.label}
+									selected={selectedGoals.includes(goal.key)}
+									onPress={() => {
+										const next = selectedGoals.includes(goal.key)
+											? selectedGoals.filter(item => item !== goal.key)
+											: [...selectedGoals, goal.key];
+										setValue('goals', next, { shouldValidate: true });
+									}}
+								/>
 							))}
 						</View>
 					</View>
-				)}
-			/>
 
-			<Button label="Kaydet" onPress={onSubmit} loading={updateMutation.isPending} />
-		</ScrollView>
+					<View style={styles.section}>
+						<Text style={styles.sectionTitle}>Sakatliklar</Text>
+						<View style={styles.chipWrap}>
+							{injuryOptions.map(injury => (
+								<Chip
+									key={injury.key}
+									label={injury.label}
+									selected={selectedInjuries.includes(injury.key)}
+									onPress={() => {
+										const next = selectedInjuries.includes(injury.key)
+											? selectedInjuries.filter(item => item !== injury.key)
+											: [...selectedInjuries, injury.key];
+										setValue('injuries', next, { shouldValidate: true });
+									}}
+									tone="warning"
+								/>
+							))}
+						</View>
+					</View>
+
+					<View style={styles.section}>
+						<Text style={styles.sectionTitle}>Dil</Text>
+						<View style={styles.languageRow}>
+							{languageOptions.map(language => (
+								<Button
+									key={language.key}
+									title={language.label}
+									onPress={() => setValue('preferred_language', language.key, { shouldValidate: true })}
+									variant={selectedLanguage === language.key ? 'primary' : 'outline'}
+									size="md"
+									fullWidth
+									accessibilityLabel={`${language.label} dil sec`}
+								/>
+							))}
+						</View>
+					</View>
+
+					<Button
+						title="Kaydet"
+						onPress={onSubmit}
+						variant="primary"
+						size="lg"
+						loading={updateMutation.isPending}
+						disabled={updateMutation.isPending}
+						fullWidth
+						accessibilityLabel="Profili kaydet"
+					/>
+				</ScrollView>
+			</KeyboardAvoidingView>
+		</SafeAreaView>
 	);
 };
 
 const styles = StyleSheet.create({
+	safeArea: {
+		flex: 1,
+		backgroundColor: colors.background,
+	},
+	keyboardAvoid: {
+		flex: 1,
+	},
 	container: {
 		flex: 1,
 		backgroundColor: colors.background,
 	},
 	content: {
-		padding: spacing.lg,
-		gap: spacing.lg,
+		paddingHorizontal: spacing.base,
 		paddingBottom: spacing.xxl,
+		gap: spacing.base,
+	},
+	errorWrap: {
+		flex: 1,
+		justifyContent: 'center',
+		paddingHorizontal: spacing.base,
+	},
+	headerSave: {
+		...typography.bodySmMedium,
+		color: colors.primary,
 	},
 	section: {
 		gap: spacing.sm,
 	},
-	label: {
-		...typography.body,
+	sectionTitle: {
+		...typography.bodySmMedium,
 		color: colors.text,
 	},
-	input: {
-		borderWidth: 1,
-		borderColor: colors.border,
-		borderRadius: 12,
-		backgroundColor: colors.surface,
-		color: colors.text,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
-	},
-	error: {
-		...typography.caption,
-		color: colors.error,
-	},
-	wrap: {
+	levelGrid: {
 		flexDirection: 'row',
-		flexWrap: 'wrap',
 		gap: spacing.sm,
 	},
-	chip: {
+	levelCard: {
+		flex: 1,
+		paddingVertical: spacing.md,
+		paddingHorizontal: spacing.sm,
+		borderRadius: radius.lg,
 		borderWidth: 1,
 		borderColor: colors.border,
-		borderRadius: 999,
-		paddingHorizontal: spacing.md,
-		paddingVertical: spacing.sm,
 		backgroundColor: colors.surface,
+		alignItems: 'center',
+		gap: spacing.xs,
 	},
-	chipSelected: {
-		backgroundColor: colors.primaryDark,
+	levelCardSelected: {
 		borderColor: colors.primary,
+		backgroundColor: colors.primarySoft,
 	},
-	chipText: {
-		...typography.bodySmall,
+	levelLabel: {
+		...typography.captionMedium,
 		color: colors.textSecondary,
 	},
-	chipTextSelected: {
-		color: colors.text,
+	levelLabelSelected: {
+		color: colors.primaryDark,
+	},
+	chipWrap: {
+		flexDirection: 'row',
+		flexWrap: 'wrap',
+		gap: spacing.xs,
+	},
+	languageRow: {
+		flexDirection: 'row',
+		gap: spacing.sm,
 	},
 });
 

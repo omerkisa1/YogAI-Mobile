@@ -1,37 +1,62 @@
 import React from 'react';
 import {
 	ActivityIndicator,
+	GestureResponderEvent,
 	Pressable,
+	StyleProp,
 	StyleSheet,
 	Text,
 	TextStyle,
+	View,
 	ViewStyle,
 } from 'react-native';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
-import { spacing } from '../../theme/spacing';
+import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'outline';
+export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
+export type ButtonSize = 'lg' | 'md' | 'sm';
 
-interface ButtonProps {
-	label: string;
-	onPress: () => void;
-	variant?: ButtonVariant;
-	loading?: boolean;
-	disabled?: boolean;
-	fullWidth?: boolean;
+interface VariantStyle {
+	container: ViewStyle;
+	text: TextStyle;
+	iconColor: string;
+	spinnerColor: string;
 }
 
-const variantStyles: Record<ButtonVariant, { container: ViewStyle; text: TextStyle; spinner: string }> = {
+interface SizeStyle {
+	container: ViewStyle;
+	text: TextStyle;
+	iconSize: number;
+}
+
+export interface ButtonProps {
+	title?: string;
+	label?: string;
+	onPress: (event: GestureResponderEvent) => void;
+	variant?: ButtonVariant;
+	size?: ButtonSize;
+	loading?: boolean;
+	disabled?: boolean;
+	icon?: string;
+	iconPosition?: 'left' | 'right';
+	fullWidth?: boolean;
+	accessibilityLabel?: string;
+	style?: StyleProp<ViewStyle>;
+}
+
+const variantStyles: Record<ButtonVariant, VariantStyle> = {
 	primary: {
 		container: {
 			backgroundColor: colors.primary,
 			borderColor: colors.primary,
 		},
 		text: {
-			color: colors.text,
+			color: colors.textOnPrimary,
 		},
-		spinner: colors.text,
+		iconColor: colors.textOnPrimary,
+		spinnerColor: colors.textOnPrimary,
 	},
 	secondary: {
 		container: {
@@ -39,49 +64,136 @@ const variantStyles: Record<ButtonVariant, { container: ViewStyle; text: TextSty
 			borderColor: colors.secondary,
 		},
 		text: {
-			color: colors.background,
+			color: colors.textOnPrimary,
 		},
-		spinner: colors.background,
+		iconColor: colors.textOnPrimary,
+		spinnerColor: colors.textOnPrimary,
 	},
 	outline: {
 		container: {
 			backgroundColor: 'transparent',
-			borderColor: colors.border,
+			borderColor: colors.primary,
 		},
 		text: {
-			color: colors.text,
+			color: colors.primary,
 		},
-		spinner: colors.text,
+		iconColor: colors.primary,
+		spinnerColor: colors.primary,
+	},
+	ghost: {
+		container: {
+			backgroundColor: 'transparent',
+			borderColor: 'transparent',
+		},
+		text: {
+			color: colors.primary,
+		},
+		iconColor: colors.primary,
+		spinnerColor: colors.primary,
+	},
+	danger: {
+		container: {
+			backgroundColor: colors.error,
+			borderColor: colors.error,
+		},
+		text: {
+			color: colors.textOnPrimary,
+		},
+		iconColor: colors.textOnPrimary,
+		spinnerColor: colors.textOnPrimary,
+	},
+};
+
+const sizeStyles: Record<ButtonSize, SizeStyle> = {
+	lg: {
+		container: {
+			minHeight: 52,
+			paddingHorizontal: spacing.xl,
+			paddingVertical: spacing.md,
+			borderRadius: radius.lg,
+		},
+		text: typography.buttonLg,
+		iconSize: 20,
+	},
+	md: {
+		container: {
+			minHeight: 46,
+			paddingHorizontal: spacing.lg,
+			paddingVertical: spacing.sm,
+			borderRadius: radius.md,
+		},
+		text: typography.buttonMd,
+		iconSize: 18,
+	},
+	sm: {
+		container: {
+			minHeight: 38,
+			paddingHorizontal: spacing.base,
+			paddingVertical: spacing.xs,
+			borderRadius: radius.sm,
+		},
+		text: typography.buttonSm,
+		iconSize: 16,
 	},
 };
 
 const Button = ({
+	title,
 	label,
 	onPress,
 	variant = 'primary',
+	size = 'md',
 	loading = false,
 	disabled = false,
 	fullWidth = true,
+	icon,
+	iconPosition = 'left',
+	accessibilityLabel,
+	style,
 }: ButtonProps) => {
 	const currentVariant = variantStyles[variant];
+	const currentSize = sizeStyles[size];
 	const isDisabled = disabled || loading;
+	const buttonTitle = title ?? label ?? '';
 
 	return (
 		<Pressable
 			style={({ pressed }) => [
 				styles.base,
+				currentSize.container,
 				fullWidth && styles.fullWidth,
 				currentVariant.container,
 				isDisabled && styles.disabled,
 				pressed && !isDisabled && styles.pressed,
+				style,
 			]}
 			disabled={isDisabled}
 			onPress={onPress}
+			accessibilityRole="button"
+			accessibilityLabel={accessibilityLabel ?? buttonTitle}
 		>
 			{loading ? (
-				<ActivityIndicator size="small" color={currentVariant.spinner} />
+				<ActivityIndicator size="small" color={currentVariant.spinnerColor} />
 			) : (
-				<Text style={[styles.label, currentVariant.text]}>{label}</Text>
+				<View style={styles.contentRow}>
+					{icon && iconPosition === 'left' ? (
+						<MaterialCommunityIcons
+							name={icon}
+							size={currentSize.iconSize}
+							color={currentVariant.iconColor}
+							style={styles.iconLeft}
+						/>
+					) : null}
+					<Text style={[styles.label, currentSize.text, currentVariant.text]}>{buttonTitle}</Text>
+					{icon && iconPosition === 'right' ? (
+						<MaterialCommunityIcons
+							name={icon}
+							size={currentSize.iconSize}
+							color={currentVariant.iconColor}
+							style={styles.iconRight}
+						/>
+					) : null}
+				</View>
 			)}
 		</Pressable>
 	);
@@ -89,25 +201,33 @@ const Button = ({
 
 const styles = StyleSheet.create({
 	base: {
-		minHeight: 48,
-		borderRadius: 12,
 		borderWidth: 1,
 		alignItems: 'center',
 		justifyContent: 'center',
-		paddingHorizontal: spacing.lg,
-		paddingVertical: spacing.sm,
 	},
 	fullWidth: {
 		width: '100%',
 	},
+	contentRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
 	label: {
-		...typography.button,
+		textAlign: 'center',
 	},
 	disabled: {
-		opacity: 0.6,
+		opacity: 0.5,
 	},
 	pressed: {
-		transform: [{ scale: 0.98 }],
+		opacity: 0.9,
+		transform: [{ scale: 0.985 }],
+	},
+	iconLeft: {
+		marginRight: spacing.sm,
+	},
+	iconRight: {
+		marginLeft: spacing.sm,
 	},
 });
 
