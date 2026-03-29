@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
@@ -17,7 +17,7 @@ const OfflineBanner = ({ visible }: OfflineBannerProps) => {
 	return (
 		<View style={styles.container}>
 			<MaterialCommunityIcons name="wifi-off" size={16} color={colors.textOnPrimary} />
-			<Text style={styles.text}>Internet baglantisi yok</Text>
+			<Text style={styles.text}>İnternet Bağlantısi yok</Text>
 		</View>
 	);
 };

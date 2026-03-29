@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import Button from '../../shared/components/Button';
@@ -18,7 +18,7 @@ const TrainingScreen = ({ route }: Props) => {
 				<Text style={styles.meta}>Plan ID: {route.params.planId}</Text>
 				<Text style={styles.meta}>Session ID: {route.params.sessionId}</Text>
 				<Text style={styles.description}>Kamera tabanli poz analizi yakin zamanda eklenecek.</Text>
-				<Button title="Yakinda" onPress={() => {}} disabled />
+				<Button title="Yakında" onPress={() => {}} disabled />
 			</View>
 		</SafeAreaView>
 	);

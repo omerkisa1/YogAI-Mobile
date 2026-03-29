@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
 	Animated,
@@ -186,7 +186,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 						}}
 						style={styles.headerActionButton}
 						accessibilityRole="button"
-						accessibilityLabel="Favori degistir"
+							accessibilityLabel="Favori değiştir"
 					>
 						<MaterialCommunityIcons
 							name={plan.favorite ? 'star' : 'star-outline'}
@@ -200,7 +200,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 						}}
 						style={styles.headerActionButton}
 						accessibilityRole="button"
-						accessibilityLabel="Sabitleme degistir"
+							accessibilityLabel="Sabitleme değiştir"
 					>
 						<MaterialCommunityIcons
 							name={plan.pin ? 'pin' : 'pin-outline'}
@@ -229,15 +229,15 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 				type: 'success',
 				position: 'top',
 				text1: 'Plan silindi',
-				text2: 'Plan listenizden kaldirildi.',
+				text2: 'Plan listenizden kaldırıldı.',
 			});
 			navigation.goBack();
 		} catch {
 			Toast.show({
 				type: 'error',
 				position: 'top',
-				text1: 'Silme basarisiz',
-				text2: 'Plan silinemedi. Lutfen tekrar deneyin.',
+				text1: 'Silme Başarısız',
+				text2: 'Plan silinemedi. Lütfen tekrar deneyin.',
 			});
 		}
 	};
@@ -252,16 +252,16 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 			Toast.show({
 				type: 'success',
 				position: 'top',
-				text1: 'Antrenman basladi',
-				text2: 'Kamera entegrasyonu sonraki adimda aktif olacak.',
+				text1: 'Antrenman başladı',
+				text2: 'Kamera entegrasyonu sonraki adımda aktif olacak.',
 			});
 			navigation.navigate('TrainingSession', { planId: plan.id, sessionId: session.session_id });
 		} catch {
 			Toast.show({
 				type: 'error',
 				position: 'top',
-				text1: 'Antrenman baslatilamadi',
-				text2: 'Lutfen tekrar deneyin.',
+				text1: 'Antrenman başlatılamadı',
+				text2: 'Lütfen tekrar deneyin.',
 			});
 		}
 	};
@@ -270,7 +270,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 		return (
 			<SafeAreaView style={styles.safeArea}>
 				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-				<LoadingView message="Plan detayi yukleniyor..." fullScreen />
+				<LoadingView message="Plan Detayı Yükleniyor..." fullScreen />
 			</SafeAreaView>
 		);
 	}
@@ -282,8 +282,8 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 				<View style={styles.errorWrap}>
 					<ErrorView
 						type="notfound"
-						title="Plan bulunamadi"
-						description="Plan detaylari su anda getirilemiyor."
+						title="Plan bulunamadı"
+						description="Plan detayları şu anda getirilemiyor."
 						onRetry={() => {
 							void planQuery.refetch();
 						}}
@@ -350,7 +350,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 
 			<View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, spacing.base) }]}>
 				<Button
-					title="Antrenmani Baslat"
+					title="Antrenmanı Başlat"
 					onPress={onStartTraining}
 					variant="primary"
 					size="lg"
@@ -358,19 +358,19 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 					icon="play-circle-outline"
 					loading={startSessionMutation.isPending}
 					disabled={startSessionMutation.isPending}
-					accessibilityLabel="Antrenmani baslat"
+					accessibilityLabel="Antrenmanı başlat"
 				/>
 			</View>
 
 			<BottomSheet
 				visible={isDeleteSheetVisible}
 				onClose={() => setDeleteSheetVisible(false)}
-				title="Plani Sil"
+				title="Planı Sil"
 			>
-				<Text style={styles.deletePrompt}>Bu plani silmek istediginize emin misiniz?</Text>
+				<Text style={styles.deletePrompt}>Bu planı silmek istediğinize emin misiniz?</Text>
 				<View style={styles.deleteActions}>
 					<Button
-						title="Iptal"
+						title="İptal"
 						onPress={() => setDeleteSheetVisible(false)}
 						variant="ghost"
 						size="md"
@@ -387,7 +387,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 						fullWidth
 						loading={deletePlanMutation.isPending}
 						disabled={deletePlanMutation.isPending}
-						accessibilityLabel="Plani sil"
+						accessibilityLabel="Planı sil"
 					/>
 				</View>
 			</BottomSheet>

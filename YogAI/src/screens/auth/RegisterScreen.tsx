@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
@@ -44,32 +44,32 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 	switch (code) {
 		case 'auth/email-already-in-use':
 			return {
-				text1: 'Kayit basarisiz',
+				text1: 'Kayıt Başarısız',
 				text2: 'Bu email zaten kullanimda.',
 				type: 'generic',
 			};
 		case 'auth/weak-password':
 			return {
-				text1: 'Zayif sifre',
-				text2: 'Sifre en az 6 karakter olmali.',
+				text1: 'Zayif Şifre',
+				text2: 'Şifre en az 6 karakter olmalı.',
 				type: 'generic',
 			};
 		case 'auth/invalid-email':
 			return {
-				text1: 'Gecersiz email',
-				text2: 'Lutfen gecerli bir email adresi girin.',
+				text1: 'Geçersiz email',
+				text2: 'Lütfen Geçerli bir email adresi girin.',
 				type: 'generic',
 			};
 		case 'auth/network-request-failed':
 			return {
-				text1: 'Baglanti hatasi',
-				text2: 'Internet baglantinizi kontrol edin.',
+				text1: 'Bağlantı hatası',
+				text2: 'İnternet bağlantınızı kontrol edin.',
 				type: 'network',
 			};
 		default:
 			return {
-				text1: 'Kayit basarisiz',
-				text2: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+				text1: 'Kayıt Başarısız',
+				text2: 'Beklenmeyen bir hata Oluştu. Lütfen tekrar deneyin.',
 				type: 'generic',
 			};
 	}
@@ -106,8 +106,8 @@ const RegisterScreen = ({ navigation }: Props) => {
 			Toast.show({
 				type: 'success',
 				position: 'top',
-				text1: 'Kayit basarili',
-				text2: 'Hesabiniz olusturuldu.',
+				text1: 'Kayıt başarılı',
+				text2: 'Hesabınız oluşturuldu.',
 			});
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
@@ -168,8 +168,8 @@ const RegisterScreen = ({ navigation }: Props) => {
 					) : null}
 
 					<View style={styles.formSection}>
-						<Text style={styles.title}>Hesap Olustur</Text>
-						<Text style={styles.subtitle}>Yeni hesabinizla YogAI dunyasina katilin</Text>
+						<Text style={styles.title}>Hesap Oluştur</Text>
+						<Text style={styles.subtitle}>Yeni hesabınızla YogAI dünyasına katılın</Text>
 
 						<Controller
 							name="displayName"
@@ -178,7 +178,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 								required: 'Ad Soyad zorunlu',
 								minLength: {
 									value: 2,
-									message: 'Ad Soyad en az 2 karakter olmali',
+									message: 'Ad Soyad en az 2 karakter olmalı',
 								},
 							}}
 							render={({ field: { value, onChange } }) => (
@@ -203,7 +203,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 								required: 'Email zorunlu',
 								pattern: {
 									value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-									message: 'Gecerli email adresi girin',
+									message: 'Geçerli email adresi girin',
 								},
 							}}
 							render={({ field: { value, onChange } }) => (
@@ -226,16 +226,16 @@ const RegisterScreen = ({ navigation }: Props) => {
 							name="password"
 							control={control}
 							rules={{
-								required: 'Sifre zorunlu',
+								required: 'Şifre zorunlu',
 								minLength: {
 									value: 6,
-									message: 'Sifre en az 6 karakter olmali',
+									message: 'Şifre en az 6 karakter olmalı',
 								},
 							}}
 							render={({ field: { value, onChange } }) => (
 								<Input
-									label="Sifre"
-									placeholder="Sifrenizi girin"
+									label="Şifre"
+									placeholder="Şifrenizi girin"
 									value={value}
 									onChangeText={onChange}
 									error={errors.password?.message}
@@ -243,7 +243,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 									secureTextEntry={!isPasswordVisible}
 									rightIcon={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
 									onRightIconPress={() => setIsPasswordVisible(prev => !prev)}
-									accessibilityLabel="Sifre"
+									accessibilityLabel="Şifre"
 								/>
 							)}
 						/>
@@ -252,13 +252,13 @@ const RegisterScreen = ({ navigation }: Props) => {
 							name="confirmPassword"
 							control={control}
 							rules={{
-								required: 'Sifre tekrari zorunlu',
-								validate: value => value === passwordValue || 'Sifreler eslesmiyor',
+								required: 'Şifre tekrarı zorunlu',
+								validate: value => value === passwordValue || 'Şifreler eşleşmiyor',
 							}}
 							render={({ field: { value, onChange } }) => (
 								<Input
-									label="Sifre Tekrar"
-									placeholder="Sifrenizi tekrar girin"
+									label="Şifre Tekrar"
+									placeholder="Şifrenizi tekrar girin"
 									value={value}
 									onChangeText={onChange}
 									error={errors.confirmPassword?.message}
@@ -266,20 +266,20 @@ const RegisterScreen = ({ navigation }: Props) => {
 									secureTextEntry={!isConfirmPasswordVisible}
 									rightIcon={isConfirmPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
 									onRightIconPress={() => setIsConfirmPasswordVisible(prev => !prev)}
-									accessibilityLabel="Sifre tekrar"
+									accessibilityLabel="Şifre tekrar"
 								/>
 							)}
 						/>
 
 						<Button
-							title="Kayit Ol"
+							title="Kayıt Ol"
 							onPress={onSubmit}
 							variant="primary"
 							size="lg"
 							loading={loading}
 							disabled={loading}
 							fullWidth
-							accessibilityLabel="Kayit ol"
+							accessibilityLabel="Kayıt ol"
 						/>
 
 						<View style={styles.separatorRow}>
@@ -289,7 +289,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 						</View>
 
 						<Button
-							title="Google ile Kayit Ol"
+							title="Google ile Kayıt Ol"
 							onPress={onGoogleRegister}
 							variant="outline"
 							size="lg"
@@ -297,18 +297,18 @@ const RegisterScreen = ({ navigation }: Props) => {
 							loading={loading}
 							disabled={loading}
 							fullWidth
-							accessibilityLabel="Google ile kayit ol"
+							accessibilityLabel="Google ile Kayıt ol"
 						/>
 
 						<View style={styles.loginRow}>
-							<Text style={styles.loginHint}>Zaten hesabin var mi?</Text>
+							<Text style={styles.loginHint}>Zaten hesabın var mı?</Text>
 							<Pressable
 								onPress={() => navigation.navigate('Login')}
 								style={styles.loginPressable}
 								accessibilityRole="button"
-								accessibilityLabel="Giris yap ekranina git"
+								accessibilityLabel="Giriş yap ekranına git"
 							>
-								<Text style={styles.loginAction}>Giris Yap</Text>
+								<Text style={styles.loginAction}>Giriş Yap</Text>
 							</Pressable>
 						</View>
 					</View>

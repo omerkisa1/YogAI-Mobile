@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -50,9 +50,9 @@ const AuthenticatedNavigator = () => {
 			})}
 		>
 			<Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-			<Stack.Screen name="PlanDetail" component={PlanDetailScreen} options={{ title: 'Plan Detayi' }} />
-			<Stack.Screen name="CreatePlan" component={CreatePlanScreen} options={{ title: 'Plan Olustur' }} />
-			<Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Profili Duzenle' }} />
+			<Stack.Screen name="PlanDetail" component={PlanDetailScreen} options={{ title: 'Plan Detayı' }} />
+			<Stack.Screen name="CreatePlan" component={CreatePlanScreen} options={{ title: 'Plan Oluştur' }} />
+			<Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Profili Düzenle' }} />
 			<Stack.Screen name="TrainingSession" component={TrainingScreen} options={{ title: 'Antrenman' }} />
 		</Stack.Navigator>
 	);

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
 	FlatList,
 	Pressable,
@@ -85,8 +85,8 @@ const TrainingHistoryScreen = () => {
 				<View style={styles.errorWrap}>
 					<ErrorView
 						type="generic"
-						title="Antrenman verileri yuklenemedi"
-						description="Lutfen internet baglantinizi kontrol ederek tekrar deneyin."
+						title="Antrenman verileri yüklenemedi"
+						description="Lütfen internet bağlantınızı kontrol ederek tekrar deneyin."
 						onRetry={() => {
 							void onRefresh();
 						}}
@@ -107,8 +107,8 @@ const TrainingHistoryScreen = () => {
 					Toast.show({
 						type: 'info',
 						position: 'top',
-						text1: 'Detay yakinda',
-						text2: 'Antrenman detay ekrani sonraki adimda eklenecek.',
+						text1: 'Detay yakında',
+						text2: 'Antrenman detay ekranı sonraki adımda eklenecek.',
 					});
 				}}
 				style={styles.sessionPressable}
@@ -141,11 +141,11 @@ const TrainingHistoryScreen = () => {
 				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
 				ListHeaderComponent={
 					<View>
-						<Text style={styles.pageTitle}>Antrenmanlarim</Text>
+						<Text style={styles.pageTitle}>Antrenmanlarım</Text>
 						<Card variant="elevated" style={styles.statsCard}>
 							<Text style={styles.statsLine}>Toplam: {stats.total_sessions} antrenman</Text>
 							<Text style={styles.statsLine}>Ortalama skor: %{Math.round(stats.average_accuracy)}</Text>
-							<Text style={styles.statsLine}>Toplam sure: {formatHours(stats.total_duration_sec)} saat</Text>
+							<Text style={styles.statsLine}>Toplam süre: {formatHours(stats.total_duration_sec)} saat</Text>
 							<ProgressBar progress={Math.round(stats.average_accuracy)} color={colors.primary} />
 						</Card>
 					</View>
@@ -153,8 +153,8 @@ const TrainingHistoryScreen = () => {
 				ListEmptyComponent={
 					<EmptyState
 						icon="meditation"
-						title="Henuz antrenman yapmadiniz"
-						description="Ilk antrenmaniniza baslayarak ilerlemenizi takip edin."
+						title="Henüz antrenman yapmadınız"
+						description="İlk antrenmanınıza başlayarak ilerlemenizi takip edin."
 					/>
 				}
 				ListFooterComponent={<View style={styles.listFooter} />}

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -8,7 +8,7 @@ interface LoadingScreenProps {
 	message?: string;
 }
 
-const LoadingScreen = ({ message = 'Yukleniyor...' }: LoadingScreenProps) => {
+const LoadingScreen = ({ message = 'Yükleniyor...' }: LoadingScreenProps) => {
 	return (
 		<View style={styles.container}>
 			<ActivityIndicator size="large" color={colors.primary} />

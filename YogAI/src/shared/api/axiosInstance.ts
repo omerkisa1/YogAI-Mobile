@@ -1,4 +1,4 @@
-import auth from '@react-native-firebase/auth';
+﻿import auth from '@react-native-firebase/auth';
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 import { useAuthStore } from '../../features/auth/stores/authStore';
@@ -70,8 +70,8 @@ api.interceptors.response.use(
 					Toast.show({
 						type: 'error',
 						position: 'top',
-						text1: 'Sunucu hatasi',
-						text2: 'Lutfen tekrar deneyin',
+						text1: 'Sunucu hatası',
+						text2: 'Lütfen tekrar deneyin',
 					});
 					break;
 				default:
@@ -79,8 +79,8 @@ api.interceptors.response.use(
 						Toast.show({
 							type: 'error',
 							position: 'top',
-							text1: 'Baglanti hatasi',
-							text2: 'Internet baglantinizi kontrol edin',
+							text1: 'Bağlantı hatası',
+							text2: 'İnternet bağlantınızı kontrol edin',
 						});
 					}
 			}

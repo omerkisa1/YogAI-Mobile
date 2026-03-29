@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
@@ -24,23 +24,23 @@ interface ErrorViewProps {
 
 const errorPresets: Record<ErrorType, ErrorPreset> = {
 	network: {
-		title: 'Baglanti hatasi',
-		description: 'Internet baglantinizi kontrol edip tekrar deneyin.',
+		title: 'Bağlantı hatası',
+		description: 'İnternet bağlantınızı kontrol edip tekrar deneyin.',
 		icon: 'wifi-alert',
 	},
 	server: {
-		title: 'Sunucu hatasi',
-		description: 'Servis gecici olarak kullanilamiyor. Lutfen tekrar deneyin.',
+		title: 'Sunucu hatası',
+		description: 'Servis geçici olarak kullanılamıyor. Lütfen tekrar deneyin.',
 		icon: 'server-network-off',
 	},
 	notfound: {
-		title: 'Icerik bulunamadi',
-		description: 'Aradiginiz icerik artik mevcut olmayabilir.',
+		title: 'İçerik bulunamadı',
+		description: 'Aradığınız içerik artık mevcut olmayabilir.',
 		icon: 'file-search-outline',
 	},
 	generic: {
-		title: 'Bir seyler ters gitti',
-		description: 'Islem su anda tamamlanamadi. Lutfen tekrar deneyin.',
+		title: 'Bir şeyler ters gitti',
+		description: 'İşlem şu anda tamamlanamadı. Lütfen tekrar deneyin.',
 		icon: 'alert-circle-outline',
 	},
 };
@@ -71,7 +71,7 @@ const ErrorView = ({
 					size="md"
 					fullWidth={false}
 					icon="refresh"
-					accessibilityLabel="Hatayi tekrar dene"
+					accessibilityLabel="Hatayı tekrar dene"
 				/>
 			) : null}
 		</View>

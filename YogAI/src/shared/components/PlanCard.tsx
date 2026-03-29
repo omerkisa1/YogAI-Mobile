@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
@@ -55,13 +55,13 @@ const PlanCard = ({
 			variant="default"
 			onPress={() => onPress(plan.id)}
 			style={styles.card}
-			accessibilityLabel={`${plan.title_tr || plan.title_en} plan karti`}
+			accessibilityLabel={`${plan.title_tr || plan.title_en} plan kartı`}
 		>
 			<Pressable
 				onLongPress={onLongPress ? () => onLongPress(plan) : undefined}
 				delayLongPress={260}
 				accessibilityRole="button"
-				accessibilityLabel="Plan seceneklerini ac"
+				accessibilityLabel="Plan seçeneklerini aç"
 			>
 				<View style={styles.headerRow}>
 					<Text numberOfLines={1} style={styles.title}>
@@ -73,7 +73,7 @@ const PlanCard = ({
 							disabled={actionsDisabled || !onToggleFavorite}
 							style={styles.actionButton}
 							accessibilityRole="button"
-							accessibilityLabel="Favori durumu degistir"
+							accessibilityLabel="Favori durumu değiştir"
 						>
 							<MaterialCommunityIcons
 								name={plan.favorite ? 'star' : 'star-outline'}
@@ -86,7 +86,7 @@ const PlanCard = ({
 							disabled={actionsDisabled || !onTogglePin}
 							style={styles.actionButton}
 							accessibilityRole="button"
-							accessibilityLabel="Sabitleme durumu degistir"
+							accessibilityLabel="Sabitleme durumu değiştir"
 						>
 							<MaterialCommunityIcons
 								name={plan.pin ? 'pin' : 'pin-outline'}

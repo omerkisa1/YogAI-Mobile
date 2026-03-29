@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+﻿import React, { useMemo } from 'react';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
 	Alert,
@@ -70,8 +70,8 @@ const ProfileScreen = () => {
 	const profileQuery = useProfile();
 	const { signOut, isSubmitting, user, authProvider } = useAuth();
 
-	const displayName = profileQuery.data?.display_name || user?.displayName || 'YogAI Kullanici';
-	const email = user?.email || 'email bulunamadi';
+	const displayName = profileQuery.data?.display_name || user?.displayName || 'YogAI Kullanıcı';
+	const email = user?.email || 'email bulunamadı';
 	const avatarInitial = displayName.charAt(0).toUpperCase() || 'Y';
 
 	const goals = useMemo(
@@ -84,10 +84,10 @@ const ProfileScreen = () => {
 	);
 
 	const onSignOut = () => {
-		Alert.alert('Cikis Yap', 'Hesabinizdan cikis yapmak istediginize emin misiniz?', [
-			{ text: 'Iptal', style: 'cancel' },
+		Alert.alert('Çıkış Yap', 'Hesabınızdan çıkış yapmak istediğinize emin misiniz?', [
+			{ text: 'İptal', style: 'cancel' },
 			{
-				text: 'Cikis Yap',
+				text: 'Çıkış Yap',
 				style: 'destructive',
 				onPress: async () => {
 					try {
@@ -96,8 +96,8 @@ const ProfileScreen = () => {
 						Toast.show({
 							type: 'error',
 							position: 'top',
-							text1: 'Cikis basarisiz',
-							text2: 'Lutfen tekrar deneyin.',
+							text1: 'Çıkış Başarısız',
+							text2: 'Lütfen tekrar deneyin.',
 						});
 					}
 				},
@@ -109,7 +109,7 @@ const ProfileScreen = () => {
 		return (
 			<SafeAreaView style={styles.safeArea}>
 				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-				<LoadingView message="Profil yukleniyor..." fullScreen />
+				<LoadingView message="Profil Yükleniyor..." fullScreen />
 			</SafeAreaView>
 		);
 	}
@@ -121,8 +121,8 @@ const ProfileScreen = () => {
 				<View style={styles.errorWrap}>
 					<ErrorView
 						type="generic"
-						title="Profil yuklenemedi"
-						description="Profil bilgileri su anda getirilemiyor."
+						title="Profil Yüklenemedi"
+						description="Profil bilgileri şu anda getirilemiyor."
 						onRetry={() => {
 							void profileQuery.refetch();
 						}}
@@ -160,7 +160,7 @@ const ProfileScreen = () => {
 						<Badge text={levelLabel} variant="primary" />
 					</View>
 					<View style={styles.infoLine}>
-						<Text style={styles.infoKey}>Yas</Text>
+						<Text style={styles.infoKey}>Yaş</Text>
 						<Text style={styles.infoValue}>{profile.age || '-'}</Text>
 					</View>
 					<View style={styles.infoLine}>
@@ -172,7 +172,7 @@ const ProfileScreen = () => {
 						<Text style={styles.infoValue}>{goals.length > 0 ? goals.join(', ') : '-'}</Text>
 					</View>
 					<View style={styles.infoLineTop}>
-						<Text style={styles.infoKey}>Sakatliklar</Text>
+						<Text style={styles.infoKey}>Sakatlıklar</Text>
 						<Text style={styles.infoValue}>{injuries.length > 0 ? injuries.join(', ') : '-'}</Text>
 					</View>
 				</Card>
@@ -182,31 +182,31 @@ const ProfileScreen = () => {
 						onPress={() => navigation.navigate('EditProfile')}
 						style={styles.actionItem}
 						accessibilityRole="button"
-						accessibilityLabel="Profili duzenle"
+						accessibilityLabel="Profili Düzenle"
 					>
-						<Text style={styles.actionText}>Profili Duzenle</Text>
+						<Text style={styles.actionText}>Profili Düzenle</Text>
 						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
 					</Pressable>
 					<Pressable
 						onPress={() =>
-							Toast.show({ type: 'info', position: 'top', text1: 'Yakinda', text2: 'Bildirim ayarlari yakinda.' })
+							Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Bildirim ayarları yakında.' })
 						}
 						style={styles.actionItem}
 						accessibilityRole="button"
-						accessibilityLabel="Bildirim ayarlari"
+						accessibilityLabel="Bildirim ayarları"
 					>
-						<Text style={styles.actionText}>Bildirim Ayarlari</Text>
+						<Text style={styles.actionText}>Bildirim ayarları</Text>
 						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
 					</Pressable>
 					<Pressable
 						onPress={() =>
-							Toast.show({ type: 'info', position: 'top', text1: 'Yakinda', text2: 'Hakkinda sayfasi yakinda.' })
+							Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Hakkında sayfası yakında.' })
 						}
 						style={styles.actionItem}
 						accessibilityRole="button"
-						accessibilityLabel="Hakkinda"
+						accessibilityLabel="Hakkında"
 					>
-						<Text style={styles.actionText}>Hakkinda</Text>
+						<Text style={styles.actionText}>Hakkında</Text>
 						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
 					</Pressable>
 					<Pressable
@@ -214,21 +214,21 @@ const ProfileScreen = () => {
 							Toast.show({
 								type: 'info',
 								position: 'top',
-								text1: 'Yakinda',
-								text2: 'Gizlilik politikasi yakinda.',
+								text1: 'Yakında',
+								text2: 'Gizlilik politikası yakında.',
 							})
 						}
 						style={styles.actionItem}
 						accessibilityRole="button"
-						accessibilityLabel="Gizlilik politikasi"
+						accessibilityLabel="Gizlilik politikası"
 					>
-						<Text style={styles.actionText}>Gizlilik Politikasi</Text>
+						<Text style={styles.actionText}>Gizlilik politikası</Text>
 						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
 					</Pressable>
 				</Card>
 
 				<Button
-					title="Cikis Yap"
+					title="Çıkış Yap"
 					onPress={onSignOut}
 					variant="outline"
 					size="lg"
@@ -236,7 +236,7 @@ const ProfileScreen = () => {
 					icon="logout"
 					disabled={isSubmitting}
 					loading={isSubmitting}
-					accessibilityLabel="Cikis yap"
+					accessibilityLabel="Çıkış yap"
 				/>
 
 				<Text style={styles.version}>YogAI v1.0.0</Text>

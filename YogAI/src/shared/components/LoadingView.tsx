@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -9,7 +9,7 @@ export interface LoadingViewProps {
 	fullScreen?: boolean;
 }
 
-const LoadingView = ({ message = 'Yukleniyor...', fullScreen = false }: LoadingViewProps) => {
+const LoadingView = ({ message = 'Yükleniyor...', fullScreen = false }: LoadingViewProps) => {
 	return (
 		<View style={[styles.container, fullScreen && styles.fullScreen]}>
 			<ActivityIndicator size="large" color={colors.primary} />

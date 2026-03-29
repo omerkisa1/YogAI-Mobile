@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
 	FlatList,
 	Pressable,
@@ -160,8 +160,8 @@ const HomeScreen = () => {
 				Toast.show({
 					type: 'error',
 					position: 'top',
-					text1: 'Islem basarisiz',
-					text2: 'Plan bilgisi guncellenemedi.',
+					text1: 'İşlem Başarısız',
+					text2: 'Plan bilgisi Güncellenemedi.',
 				});
 			}
 		},
@@ -200,7 +200,7 @@ const HomeScreen = () => {
 				<Text style={styles.quickStartTitle}>{item.title}</Text>
 				<Text style={styles.quickStartSubtitle}>{item.subtitle}</Text>
 				<Button
-					title="Baslat"
+					title="Başlat"
 					onPress={() =>
 						navigation.navigate('CreatePlan', {
 							presetLevel: item.level,
@@ -212,7 +212,7 @@ const HomeScreen = () => {
 					icon="arrow-right"
 					iconPosition="right"
 					fullWidth={false}
-					accessibilityLabel={`${item.title} hizli antrenman baslat`}
+					accessibilityLabel={`${item.title} hizli antrenman Başlat`}
 				/>
 			</Card>
 		),
@@ -226,8 +226,8 @@ const HomeScreen = () => {
 				<View style={styles.errorContainer}>
 					<ErrorView
 						type="generic"
-						title="Ana sayfa yuklenemedi"
-						description="Veriler su anda getirilemiyor. Lutfen tekrar deneyin."
+						title="Ana sayfa Yüklenemedi"
+						description="Veriler şu anda getirilemiyor. Lütfen tekrar deneyin."
 						onRetry={() => {
 							void onRefresh();
 						}}
@@ -298,13 +298,13 @@ const HomeScreen = () => {
 				/>
 
 				<View style={styles.sectionHeaderRow}>
-					<Text style={styles.sectionTitle}>Planlarim</Text>
+					<Text style={styles.sectionTitle}>Planlarım</Text>
 					<Pressable
 						onPress={() => tabNavigation.navigate('Plans')}
 						accessibilityRole="button"
-						accessibilityLabel="Tum planlari gor"
+						accessibilityLabel="Tüm planları gör"
 					>
-						<Text style={styles.viewAllText}>Tumunu Gor</Text>
+						<Text style={styles.viewAllText}>Tümünü Gör</Text>
 					</Pressable>
 				</View>
 
@@ -317,9 +317,9 @@ const HomeScreen = () => {
 				) : latestPlans.length === 0 ? (
 					<EmptyState
 						icon="calendar-plus"
-						title="Henuz planiniz yok"
-						description="Ilk planinizi olusturarak kisisel yoga yolculugunuza baslayin."
-						actionLabel="Ilk Plani Olustur"
+						title="Henüz planınız yok"
+						description="İlk planınızı oluşturarak kişisel yoga yolculuğunuza başlayın."
+						actionLabel="İlk Planı Oluştur"
 						onAction={() => navigation.navigate('CreatePlan')}
 					/>
 				) : (

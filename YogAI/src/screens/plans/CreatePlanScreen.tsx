@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useRef } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
@@ -150,7 +150,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 	}, [createPlanMutation.isPending, pulseAnim]);
 
 	const inlineSuggestion = useMemo(
-		() => 'Odak alanini veya sureyi degistirerek tekrar deneyin.',
+		() => 'Odak alanını veya süreyi değiştirerek tekrar deneyin.',
 		[],
 	);
 
@@ -163,8 +163,8 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 			Toast.show({
 				type: 'success',
 				position: 'top',
-				text1: 'Plan olusturuldu',
-				text2: 'Plan detay ekranina yonlendiriliyorsunuz.',
+				text1: 'Plan oluşturuldu',
+				text2: 'Plan detay ekranına yönlendiriliyorsunuz.',
 			});
 
 			if (result.id) {
@@ -181,7 +181,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					(error.response?.data as { error?: string; message?: string } | undefined)?.message;
 
 				if (status === 400) {
-					setInlineValidationError(backendMessage ?? 'Secilen filtrelerle plan olusturulamadi.');
+					setInlineValidationError(backendMessage ?? 'Seçilen filtrelerle plan oluşturulamadı.');
 					return;
 				}
 
@@ -194,8 +194,8 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 			Toast.show({
 				type: 'error',
 				position: 'top',
-				text1: 'Plan olusturulamadi',
-				text2: 'Lutfen tekrar deneyin.',
+				text1: 'Plan oluşturulamadı',
+				text2: 'Lütfen tekrar deneyin.',
 			});
 		}
 	});
@@ -242,7 +242,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Sure: {selectedDuration} dakika</Text>
+					<Text style={styles.sectionTitle}>Süre: {selectedDuration} dakika</Text>
 					<FlatList
 						horizontal
 						data={durationOptions}
@@ -280,7 +280,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Sakatliklariniz (varsa)</Text>
+					<Text style={styles.sectionTitle}>Sakatlıklarınız (varsa)</Text>
 					<View style={styles.chipWrap}>
 						{injuryOptions.map(injury => (
 							<Chip
@@ -318,7 +318,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					<Card variant="outlined" style={styles.inlineErrorCard}>
 						<View style={styles.inlineErrorHeader}>
 							<MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.error} />
-							<Text style={styles.inlineErrorTitle}>Plan olusturma hatasi</Text>
+							<Text style={styles.inlineErrorTitle}>Plan oluşturma hatası</Text>
 						</View>
 						<Text style={styles.inlineErrorText}>{inlineValidationError}</Text>
 						<Text style={styles.inlineSuggestion}>{inlineSuggestion}</Text>
@@ -329,8 +329,8 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					<View style={styles.serverErrorWrap}>
 						<ErrorView
 							type="server"
-							title="Plan olusturulamadi"
-							description="AI servisinde gecici bir sorun olustu."
+							title="Plan oluşturulamadı"
+							description="AI servisinde geçici bir sorun oluştu."
 							onRetry={() => {
 								void onSubmit();
 							}}
@@ -343,14 +343,14 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					name="level"
 					render={() => (
 						<Button
-							title="AI ile Plan Olustur"
+							title="AI ile plan oluştur"
 							onPress={onSubmit}
 							variant="primary"
 							size="lg"
 							loading={createPlanMutation.isPending}
 							disabled={createPlanMutation.isPending}
 							fullWidth
-							accessibilityLabel="AI ile plan olustur"
+							accessibilityLabel="AI ile plan oluştur"
 						/>
 					)}
 				/>
@@ -361,8 +361,8 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					<Animated.View style={[styles.overlayIconWrap, { transform: [{ scale: pulseAnim }] }]}>
 						<MaterialCommunityIcons name="flower-lotus" size={42} color={colors.primary} />
 					</Animated.View>
-					<Text style={styles.overlayTitle}>AI planinizi olusturuyor...</Text>
-					<Text style={styles.overlaySubtitle}>Bu islem 10-30 saniye surebilir</Text>
+					<Text style={styles.overlayTitle}>AI planınızı oluşturuyor...</Text>
+					<Text style={styles.overlaySubtitle}>Bu işlem 10-30 saniye sürebilir</Text>
 				</View>
 			) : null}
 		</SafeAreaView>

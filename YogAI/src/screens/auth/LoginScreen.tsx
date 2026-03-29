@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
@@ -48,39 +48,39 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 	switch (code) {
 		case 'auth/user-not-found':
 			return {
-				text1: 'Giris basarisiz',
-				text2: 'Bu email ile kayitli kullanici bulunamadi.',
+				text1: 'Giriş Başarısız',
+					text2: 'Bu email ile kayıtlı kullanıcı bulunamadı.',
 				type: 'generic',
 			};
 		case 'auth/wrong-password':
 		case 'auth/invalid-credential':
 			return {
-				text1: 'Giris basarisiz',
-				text2: 'Sifre hatali. Lutfen tekrar deneyin.',
+				text1: 'Giriş Başarısız',
+				text2: 'Şifre hatalı. Lütfen tekrar deneyin.',
 				type: 'generic',
 			};
 		case 'auth/invalid-email':
 			return {
-				text1: 'Gecersiz email',
-				text2: 'Lutfen gecerli bir email adresi girin.',
+				text1: 'Geçersiz email',
+				text2: 'Lütfen Geçerli bir email adresi girin.',
 				type: 'generic',
 			};
 		case 'auth/too-many-requests':
 			return {
 				text1: 'Cok fazla deneme',
-				text2: 'Lutfen bir sure bekleyip tekrar deneyin.',
+				text2: 'Lütfen bir Süre bekleyip tekrar deneyin.',
 				type: 'generic',
 			};
 		case 'auth/network-request-failed':
 			return {
-				text1: 'Baglanti hatasi',
-				text2: 'Internet baglantinizi kontrol edin.',
+					text1: 'Bağlantı hatası',
+				text2: 'İnternet bağlantınızı kontrol edin.',
 				type: 'network',
 			};
 		default:
 			return {
-				text1: 'Giris basarisiz',
-				text2: 'Beklenmeyen bir hata olustu. Lutfen tekrar deneyin.',
+				text1: 'Giriş Başarısız',
+				text2: 'Beklenmeyen bir hata Oluştu. Lütfen tekrar deneyin.',
 				type: 'generic',
 			};
 	}
@@ -181,8 +181,8 @@ const LoginScreen = ({ navigation }: Props) => {
 			Toast.show({
 				type: 'success',
 				position: 'top',
-				text1: 'Basarili',
-				text2: 'Sifre sifirlama linki gonderildi.',
+				text1: 'Başarılı',
+				text2: 'Şifre sıfırlama linki gönderildi.',
 			});
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
@@ -216,7 +216,7 @@ const LoginScreen = ({ navigation }: Props) => {
 							<MaterialCommunityIcons name="flower-lotus" size={74} color={colors.primary} />
 						</View>
 						<Text style={styles.brandTitle}>YogAI</Text>
-						<Text style={styles.brandSubtitle}>Kisisel AI yoga asistaniniz</Text>
+						<Text style={styles.brandSubtitle}>Kişisel AI yoga asistanınız</Text>
 					</View>
 
 					{hasNetworkError ? (
@@ -239,7 +239,7 @@ const LoginScreen = ({ navigation }: Props) => {
 								required: 'Email zorunlu',
 								pattern: {
 									value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-									message: 'Gecerli email adresi girin',
+									message: 'Geçerli email adresi girin',
 								},
 							}}
 							render={({ field: { value, onChange } }) => (
@@ -262,16 +262,16 @@ const LoginScreen = ({ navigation }: Props) => {
 							name="password"
 							control={control}
 							rules={{
-								required: 'Sifre zorunlu',
+								required: 'Şifre zorunlu',
 								minLength: {
 									value: 6,
-									message: 'Sifre en az 6 karakter olmali',
+									message: 'Şifre en az 6 karakter olmalı',
 								},
 							}}
 							render={({ field: { value, onChange } }) => (
 								<Input
-									label="Sifre"
-									placeholder="Sifrenizi girin"
+									label="Şifre"
+									placeholder="Şifrenizi girin"
 									value={value}
 									onChangeText={onChange}
 									error={errors.password?.message}
@@ -280,20 +280,20 @@ const LoginScreen = ({ navigation }: Props) => {
 									rightIcon={isPasswordVisible ? 'eye-off-outline' : 'eye-outline'}
 									onRightIconPress={() => setIsPasswordVisible(prev => !prev)}
 									textContentType="password"
-									accessibilityLabel="Sifre"
+									accessibilityLabel="Şifre"
 								/>
 							)}
 						/>
 
 						<Button
-							title="Giris Yap"
+							title="Giriş Yap"
 							onPress={onSubmit}
 							variant="primary"
 							size="lg"
 							loading={isSubmitting}
 							disabled={isSubmitting}
 							fullWidth
-							accessibilityLabel="Giris yap"
+							accessibilityLabel="Giriş yap"
 						/>
 
 						<Pressable
@@ -301,15 +301,15 @@ const LoginScreen = ({ navigation }: Props) => {
 							disabled={isSubmitting}
 							style={styles.forgotContainer}
 							accessibilityRole="button"
-							accessibilityLabel="Sifremi unuttum"
+							accessibilityLabel="Şifremi unuttum"
 						>
-							<Text style={styles.forgotText}>Sifremi unuttum</Text>
+							<Text style={styles.forgotText}>Şifremi unuttum</Text>
 						</Pressable>
 
 						{separator}
 
 						<Button
-							title="Google ile Giris Yap"
+							title="Google ile Giriş Yap"
 							onPress={onGoogleSignIn}
 							variant="outline"
 							size="lg"
@@ -317,18 +317,18 @@ const LoginScreen = ({ navigation }: Props) => {
 							loading={isSubmitting}
 							disabled={isSubmitting}
 							fullWidth
-							accessibilityLabel="Google ile giris yap"
+							accessibilityLabel="Google ile Giriş yap"
 						/>
 
 						<View style={styles.registerRow}>
-							<Text style={styles.registerHint}>Hesabin yok mu?</Text>
+							<Text style={styles.registerHint}>Hesabın yok mu?</Text>
 							<Pressable
 								onPress={() => navigation.navigate('Register')}
 								style={styles.registerPressable}
 								accessibilityRole="button"
-								accessibilityLabel="Kayit ol ekranina git"
+									accessibilityLabel="Kayıt ol ekranına git"
 							>
-								<Text style={styles.registerAction}>Kayit Ol</Text>
+								<Text style={styles.registerAction}>Kayıt Ol</Text>
 							</Pressable>
 						</View>
 					</View>
@@ -338,7 +338,7 @@ const LoginScreen = ({ navigation }: Props) => {
 			<BottomSheet
 				visible={isResetSheetVisible}
 				onClose={() => setIsResetSheetVisible(false)}
-				title="Sifre sifirlama"
+				title="Şifre Sıfırlama"
 			>
 				<Controller
 					name="email"
@@ -347,7 +347,7 @@ const LoginScreen = ({ navigation }: Props) => {
 						required: 'Email zorunlu',
 						pattern: {
 							value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-							message: 'Gecerli email adresi girin',
+							message: 'Geçerli email adresi girin',
 						},
 					}}
 					render={({ field: { value, onChange } }) => (
@@ -360,29 +360,29 @@ const LoginScreen = ({ navigation }: Props) => {
 							icon="email-outline"
 							keyboardType="email-address"
 							autoCapitalize="none"
-							accessibilityLabel="Sifre sifirlama email"
+							accessibilityLabel="Şifre Sıfırlama email"
 						/>
 					)}
 				/>
 
 				<View style={styles.sheetActions}>
 					<Button
-						title="Iptal"
+						title="İptal"
 						onPress={() => setIsResetSheetVisible(false)}
 						variant="ghost"
 						size="md"
 						fullWidth
-						accessibilityLabel="Sifre sifirlama iptal"
+						accessibilityLabel="Şifre Sıfırlama iptal"
 					/>
 					<Button
-						title="Sifirlama Linki Gonder"
+						title="Sıfırlama Linki Gönder"
 						onPress={onResetPassword}
 						variant="primary"
 						size="md"
 						loading={isSubmitting}
 						disabled={isSubmitting}
 						fullWidth
-						accessibilityLabel="Sifirlama linki gonder"
+						accessibilityLabel="Sıfırlama linki gönder"
 					/>
 				</View>
 			</BottomSheet>

@@ -1,16 +1,16 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import NetInfo from '@react-native-community/netinfo';
 
 export const useNetworkStatus = () => {
 	const [isOnline, setIsOnline] = useState(true);
-	const [isInternetReachable, setIsInternetReachable] = useState<boolean | null>(null);
+	const [isİnternetReachable, setIsİnternetReachable] = useState<boolean | null>(null);
 
 	useEffect(() => {
 		const unsubscribe = NetInfo.addEventListener(state => {
 			const connected = Boolean(state.isConnected);
-			const reachable = state.isInternetReachable;
+			const reachable = state.isİnternetReachable;
 			setIsOnline(connected && reachable !== false);
-			setIsInternetReachable(reachable);
+			setIsİnternetReachable(reachable);
 		});
 
 		return () => {
@@ -21,6 +21,6 @@ export const useNetworkStatus = () => {
 	return {
 		isOnline,
 		isOffline: !isOnline,
-		isInternetReachable,
+		isİnternetReachable,
 	};
 };

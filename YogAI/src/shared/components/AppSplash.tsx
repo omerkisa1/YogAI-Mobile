@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
@@ -14,7 +14,7 @@ const AppSplash = () => {
 					<MaterialCommunityIcons name="flower-lotus" size={48} color={colors.primary} />
 				</View>
 				<Text style={styles.title}>YogAI</Text>
-				<Text style={styles.subtitle}>Kisisel AI yoga asistaniniz hazirlaniyor</Text>
+				<Text style={styles.subtitle}>Kişisel AI yoga asistanınız hazırlanıyor</Text>
 			</View>
 		</SafeAreaView>
 	);

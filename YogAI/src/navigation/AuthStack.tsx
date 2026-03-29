@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -43,8 +43,8 @@ const AuthStack = () => {
 				contentStyle: { backgroundColor: colors.background },
 			})}
 		>
-			<Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, title: 'Giris' }} />
-			<Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Hesap Olustur' }} />
+			<Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false, title: 'Giriş' }} />
+			<Stack.Screen name="Register" component={RegisterScreen} options={{ title: 'Hesap Oluştur' }} />
 		</Stack.Navigator>
 	);
 };

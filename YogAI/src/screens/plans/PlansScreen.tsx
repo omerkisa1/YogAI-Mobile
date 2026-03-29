@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
 	Alert,
 	FlatList,
@@ -102,8 +102,8 @@ const PlansScreen = () => {
 				Toast.show({
 					type: 'error',
 					position: 'top',
-					text1: 'Islem basarisiz',
-					text2: 'Favori bilgisi guncellenemedi.',
+					text1: 'İşlem Başarısız',
+					text2: 'Favori bilgisi Güncellenemedi.',
 				});
 			}
 		},
@@ -118,8 +118,8 @@ const PlansScreen = () => {
 				Toast.show({
 					type: 'error',
 					position: 'top',
-					text1: 'Islem basarisiz',
-					text2: 'Sabitleme bilgisi guncellenemedi.',
+					text1: 'İşlem Başarısız',
+					text2: 'Sabitleme bilgisi Güncellenemedi.',
 				});
 			}
 		},
@@ -143,8 +143,8 @@ const PlansScreen = () => {
 
 	const handleDelete = useCallback(
 		(plan: Plan) => {
-			Alert.alert('Plani sil', 'Bu plani silmek istediginize emin misiniz?', [
-				{ text: 'Iptal', style: 'cancel' },
+			Alert.alert('Planı sil', 'Bu planı silmek istediğinize emin misiniz?', [
+				{ text: 'İptal', style: 'cancel' },
 				{
 					text: 'Sil',
 					style: 'destructive',
@@ -156,14 +156,14 @@ const PlansScreen = () => {
 								type: 'success',
 								position: 'top',
 								text1: 'Plan silindi',
-								text2: 'Plan listenizden kaldirildi.',
+								text2: 'Plan listenizden kaldırıldı.',
 							});
 						} catch {
 							Toast.show({
 								type: 'error',
 								position: 'top',
-								text1: 'Silme basarisiz',
-								text2: 'Plan silinemedi. Lutfen tekrar deneyin.',
+								text1: 'Silme Başarısız',
+								text2: 'Plan silinemedi. Lütfen tekrar deneyin.',
 							});
 						}
 					},
@@ -193,8 +193,8 @@ const PlansScreen = () => {
 				<View style={styles.errorWrap}>
 					<ErrorView
 						type="generic"
-						title="Planlar yuklenemedi"
-						description="Liste su anda getirilemiyor. Lutfen tekrar deneyin."
+						title="Planlar Yüklenemedi"
+						description="Liste şu anda getirilemiyor. Lütfen tekrar deneyin."
 						onRetry={() => {
 							void plansQuery.refetch();
 						}}
@@ -209,8 +209,8 @@ const PlansScreen = () => {
 			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 			<View style={styles.container}>
 				<View style={styles.headerRow}>
-					<Text style={styles.title}>Planlarim</Text>
-					<Pressable style={styles.filterButton} accessibilityRole="button" accessibilityLabel="Filtre secenekleri">
+					<Text style={styles.title}>Planlarım</Text>
+					<Pressable style={styles.filterButton} accessibilityRole="button" accessibilityLabel="Filtre seçenekleri">
 						<MaterialCommunityIcons name="filter-variant" size={22} color={colors.primary} />
 					</Pressable>
 				</View>
@@ -245,8 +245,8 @@ const PlansScreen = () => {
 					ListEmptyComponent={
 						<EmptyState
 							icon="calendar-plus"
-							title="Henuz plan olusturmadiniz"
-							description="Sag alttaki buton ile ilk planinizi olusturabilirsiniz."
+							title="Henüz plan oluşturmadınız"
+							description="Sağ alttaki buton ile ilk planınızı oluşturabilirsiniz."
 						/>
 					}
 				/>
@@ -255,7 +255,7 @@ const PlansScreen = () => {
 					style={styles.fab}
 					onPress={() => navigation.navigate('CreatePlan')}
 					accessibilityRole="button"
-					accessibilityLabel="Yeni plan olustur"
+					accessibilityLabel="Yeni plan oluştur"
 				>
 					<MaterialCommunityIcons name="plus" size={28} color={colors.textOnPrimary} />
 				</Pressable>
@@ -264,11 +264,11 @@ const PlansScreen = () => {
 			<BottomSheet
 				visible={Boolean(selectedPlan)}
 				onClose={() => setSelectedPlan(null)}
-				title="Plan Islemleri"
+				title="Plan İşlemleri"
 			>
 				<View style={styles.sheetActions}>
 					<Button
-						title={selectedPlan?.favorite ? 'Favorilerden Cikar' : 'Favorilere Ekle'}
+						title={selectedPlan?.favorite ? 'Favorilerden Çıkar' : 'Favorilere Ekle'}
 						onPress={() => {
 							if (selectedPlan) {
 								void toggleFavorite(selectedPlan);
@@ -279,10 +279,10 @@ const PlansScreen = () => {
 						size="md"
 						fullWidth
 						icon="star-outline"
-						accessibilityLabel="Favori islemi"
+						accessibilityLabel="Favori işlemi"
 					/>
 					<Button
-						title={selectedPlan?.pin ? 'Sabitlemeyi Kaldir' : 'Sabitle'}
+						title={selectedPlan?.pin ? 'Sabitlemeyi Kaldır' : 'Sabitle'}
 						onPress={() => {
 							if (selectedPlan) {
 								void togglePin(selectedPlan);
@@ -293,10 +293,10 @@ const PlansScreen = () => {
 						size="md"
 						fullWidth
 						icon="pin-outline"
-						accessibilityLabel="Sabitleme islemi"
+						accessibilityLabel="Sabitleme işlemi"
 					/>
 					<Button
-						title="Plani Sil"
+						title="Planı Sil"
 						onPress={() => {
 							if (selectedPlan) {
 								handleDelete(selectedPlan);
@@ -306,7 +306,7 @@ const PlansScreen = () => {
 						size="md"
 						fullWidth
 						icon="delete-outline"
-						accessibilityLabel="Plani sil"
+						accessibilityLabel="Planı sil"
 					/>
 				</View>
 			</BottomSheet>

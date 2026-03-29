@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect } from 'react';
+﻿import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
@@ -122,16 +122,16 @@ const EditProfileScreen = ({ navigation }: Props) => {
 				Toast.show({
 					type: 'success',
 					position: 'top',
-					text1: 'Profil guncellendi',
-					text2: 'Degisiklikleriniz kaydedildi.',
+					text1: 'Profil Güncellendi',
+					text2: 'Değişiklikleriniz kaydedildi.',
 				});
 				navigation.goBack();
 			} catch {
 				Toast.show({
 					type: 'error',
 					position: 'top',
-					text1: 'Kaydetme basarisiz',
-					text2: 'Lutfen tekrar deneyin.',
+					text1: 'Kaydetme Başarısız',
+					text2: 'Lütfen tekrar deneyin.',
 				});
 			}
 		}),
@@ -157,7 +157,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 		return (
 			<SafeAreaView style={styles.safeArea}>
 				<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-				<LoadingView message="Profil bilgileri yukleniyor..." fullScreen />
+				<LoadingView message="Profil bilgileri Yükleniyor..." fullScreen />
 			</SafeAreaView>
 		);
 	}
@@ -170,7 +170,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 					<ErrorView
 						type="generic"
 						title="Profil bilgisi alinamadi"
-						description="Lutfen tekrar deneyin."
+						description="Lütfen tekrar deneyin."
 						onRetry={() => {
 							void profileQuery.refetch();
 						}}
@@ -215,19 +215,19 @@ const EditProfileScreen = ({ navigation }: Props) => {
 						name="age"
 						control={control}
 						rules={{
-							min: { value: 5, message: 'Gecerli bir yas girin' },
-							max: { value: 120, message: 'Gecerli bir yas girin' },
+							min: { value: 5, message: 'Geçerli bir yaş girin' },
+							max: { value: 120, message: 'Geçerli bir yaş girin' },
 						}}
 						render={({ field: { value, onChange } }) => (
 							<Input
-								label="Yas"
-								placeholder="Yas"
+								label="Yaş"
+								placeholder="Yaş"
 								value={`${value ?? ''}`}
 								onChangeText={text => onChange(Number(text.replace(/[^0-9]/g, '')) || 0)}
 								error={errors.age?.message}
 								icon="calendar-account-outline"
 								keyboardType="number-pad"
-								accessibilityLabel="Yas"
+								accessibilityLabel="Yaş"
 							/>
 						)}
 					/>
@@ -277,7 +277,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 					</View>
 
 					<View style={styles.section}>
-						<Text style={styles.sectionTitle}>Sakatliklar</Text>
+						<Text style={styles.sectionTitle}>Sakatlıklar</Text>
 						<View style={styles.chipWrap}>
 							{injuryOptions.map(injury => (
 								<Chip
