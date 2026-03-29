@@ -72,7 +72,7 @@ const PlansScreen = () => {
 		return <ErrorView message="Planlar alinamadi." onRetry={plansQuery.refetch} />;
 	}
 
-	const plans = plansQuery.data ?? [];
+	const plans = Array.isArray(plansQuery.data) ? plansQuery.data : [];
 
 	return (
 		<View style={styles.container}>

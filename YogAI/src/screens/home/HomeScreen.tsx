@@ -47,7 +47,8 @@ const HomeScreen = () => {
 		current_streak: 0,
 	};
 
-	const latestPlans = (plansQuery.data ?? []).slice(0, 3);
+	const plans = Array.isArray(plansQuery.data) ? plansQuery.data : [];
+	const latestPlans = plans.slice(0, 3);
 
 	return (
 		<ScrollView style={styles.container} contentContainerStyle={styles.content}>
