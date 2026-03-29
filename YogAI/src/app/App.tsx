@@ -7,10 +7,24 @@ import { queryClient } from '../shared/api/queryClient';
 import RootNavigator from '../navigation/RootNavigator';
 import { useAuthStore } from '../features/auth/stores/authStore';
 
+const getProviderFromUser = (user: ReturnType<typeof auth>['currentUser']) => {
+	if (!user) {
+		return 'unknown';
+	}
+
+	if (user.providerData.some(provider => provider.providerId === 'google.com')) {
+		return 'google';
+	}
+	if (user.providerData.some(provider => provider.providerId === 'password')) {
+		return 'email';
+	}
+	return 'unknown';
+};
+
 const App = () => {
 	useEffect(() => {
 		const unsubscribe = auth().onAuthStateChanged(user => {
-			useAuthStore.getState().setUser(user);
+			useAuthStore.getState().setUser(user, getProviderFromUser(user));
 		});
 
 		return unsubscribe;

@@ -12,4 +12,7 @@ export interface Profile {
 	goals: Goal[];
 	injuries: Injury[];
 	preferred_language: AppLanguage;
+	platform?: string;
+	last_login_at?: string;
+	auth_provider?: string;
 }

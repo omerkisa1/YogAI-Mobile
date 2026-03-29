@@ -1,11 +1,13 @@
 import auth from '@react-native-firebase/auth';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { Platform } from 'react-native';
 
 GoogleSignin.configure({
 	webClientId: 'FIREBASE_WEB_CLIENT_ID',
 });
 
 export const authService = {
+	// --- Existing: Google Sign-In ---
 	signInWithGoogle: async () => {
 		await GoogleSignin.hasPlayServices();
 		const signInResult = await GoogleSignin.signIn();
@@ -14,17 +16,29 @@ export const authService = {
 			throw new Error('Google Sign-In failed: no idToken');
 		}
 		const credential = auth.GoogleAuthProvider.credential(idToken);
-		return auth().signInWithCredential(credential);
+		const userCredential = await auth().signInWithCredential(credential);
+		return { userCredential, provider: 'google' as const };
 	},
 
-	registerWithEmail: (email: string, password: string) => {
-		return auth().createUserWithEmailAndPassword(email, password);
+	// --- New: Email/Password Register ---
+	registerWithEmail: async (email: string, password: string, displayName: string) => {
+		const userCredential = await auth().createUserWithEmailAndPassword(email, password);
+		await userCredential.user.updateProfile({ displayName });
+		return { userCredential, provider: 'email' as const };
 	},
 
-	signInWithEmail: (email: string, password: string) => {
-		return auth().signInWithEmailAndPassword(email, password);
+	// --- New: Email/Password Login ---
+	signInWithEmail: async (email: string, password: string) => {
+		const userCredential = await auth().signInWithEmailAndPassword(email, password);
+		return { userCredential, provider: 'email' as const };
 	},
 
+	// --- New: Password Reset ---
+	resetPassword: async (email: string) => {
+		await auth().sendPasswordResetEmail(email);
+	},
+
+	// --- Existing: Sign Out ---
 	signOut: async () => {
 		try {
 			await GoogleSignin.signOut();
@@ -42,5 +56,27 @@ export const authService = {
 			return null;
 		}
 		return user.getIdToken(true);
+	},
+
+	// --- New: Platform info ---
+	getPlatform: (): string => {
+		return Platform.OS;
+	},
+
+	// --- New: Auth provider info ---
+	getAuthProvider: (): string => {
+		const user = auth().currentUser;
+		if (!user) {
+			return 'unknown';
+		}
+
+		const providers = user.providerData;
+		if (providers.some(p => p.providerId === 'google.com')) {
+			return 'google';
+		}
+		if (providers.some(p => p.providerId === 'password')) {
+			return 'email';
+		}
+		return 'unknown';
 	},
 };

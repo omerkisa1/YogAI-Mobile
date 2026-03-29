@@ -5,7 +5,8 @@ interface AuthState {
 	user: FirebaseAuthTypes.User | null;
 	isLoading: boolean;
 	isAuthenticated: boolean;
-	setUser: (user: FirebaseAuthTypes.User | null) => void;
+	authProvider: string;
+	setUser: (user: FirebaseAuthTypes.User | null, provider?: string) => void;
 	setLoading: (loading: boolean) => void;
 }
 
@@ -13,10 +14,12 @@ export const useAuthStore = create<AuthState>(set => ({
 	user: null,
 	isLoading: true,
 	isAuthenticated: false,
-	setUser: user =>
+	authProvider: 'unknown',
+	setUser: (user, provider) =>
 		set({
 			user,
 			isAuthenticated: Boolean(user),
+			authProvider: provider ?? 'unknown',
 			isLoading: false,
 		}),
 	setLoading: isLoading => set({ isLoading }),
