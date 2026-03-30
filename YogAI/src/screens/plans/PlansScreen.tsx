@@ -12,12 +12,12 @@ import {
 } from 'react-native';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import Toast from 'react-native-toast-message';
 import { useDeletePlan, useUpdatePlan } from '../../features/plans/hooks/useCreatePlan';
 import { usePlans } from '../../features/plans/hooks/usePlans';
 import BottomSheet from '../../shared/components/BottomSheet';
 import Button from '../../shared/components/Button';
-import Chip from '../../shared/components/Chip';
 import EmptyState from '../../shared/components/EmptyState';
 import ErrorView from '../../shared/components/ErrorView';
 import PlanCard from '../../shared/components/PlanCard';
@@ -25,7 +25,7 @@ import SkeletonLoader from '../../shared/components/SkeletonLoader';
 import { Plan } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
-import { radius, shadows, spacing } from '../../theme/spacing';
+import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
 type PlanFilter = 'all' | 'favorites' | 'beginner' | 'intermediate' | 'advanced';
@@ -33,14 +33,15 @@ type PlanFilter = 'all' | 'favorites' | 'beginner' | 'intermediate' | 'advanced'
 interface FilterOption {
 	key: PlanFilter;
 	label: string;
+	icon?: string;
 }
 
 const filterOptions: FilterOption[] = [
-	{ key: 'all', label: 'Tumu' },
-	{ key: 'favorites', label: 'Favoriler' },
-	{ key: 'beginner', label: 'Baslangic' },
+	{ key: 'all', label: 'Tümü' },
+	{ key: 'favorites', label: 'Favoriler', icon: 'star-outline' },
+	{ key: 'beginner', label: 'Başlangıç' },
 	{ key: 'intermediate', label: 'Orta' },
-	{ key: 'advanced', label: 'Ileri' },
+	{ key: 'advanced', label: 'İleri' },
 ];
 
 const PlansScreen = () => {
@@ -84,12 +85,28 @@ const PlansScreen = () => {
 
 	const renderFilterItem = useCallback(
 		({ item }: { item: FilterOption }) => (
-			<Chip
-				label={item.label}
-				selected={activeFilter === item.key}
+			<Pressable
 				onPress={() => setActiveFilter(item.key)}
-				icon={item.key === 'favorites' ? 'star-outline' : undefined}
-			/>
+				style={({ pressed }) => [
+					styles.filterChip,
+					activeFilter === item.key ? styles.filterChipSelected : styles.filterChipUnselected,
+					pressed && styles.filterChipPressed,
+				]}
+				accessibilityRole="button"
+				accessibilityLabel={`${item.label} filtresi`}
+			>
+				{item.icon ? (
+					<MaterialCommunityIcons
+						name={item.icon}
+						size={14}
+						color={activeFilter === item.key ? colors.textOnPrimary : colors.textSecondary}
+						style={styles.filterChipIcon}
+					/>
+				) : null}
+				<Text style={[styles.filterChipLabel, activeFilter === item.key ? styles.filterChipLabelSelected : styles.filterChipLabelUnselected]}>
+					{item.label}
+				</Text>
+			</Pressable>
 		),
 		[activeFilter],
 	);
@@ -225,9 +242,6 @@ const PlansScreen = () => {
 					maxToRenderPerBatch={10}
 					windowSize={5}
 					removeClippedSubviews
-					getItemLayout={(_, index) => ({ length: 116, offset: 116 * index, index })}
-					ListHeaderComponent={<View />}
-					ListFooterComponent={<View style={styles.listFooterSpacer} />}
 				/>
 
 				<FlatList
@@ -245,8 +259,10 @@ const PlansScreen = () => {
 					ListEmptyComponent={
 						<EmptyState
 							icon="calendar-plus"
-							title="Henüz plan oluşturmadınız"
-							description="Sağ alttaki buton ile ilk planınızı oluşturabilirsiniz."
+							title="Henüz planınız yok"
+							description="AI ile ilk yoga planınızı oluşturmaya başlayın."
+							actionLabel="İlk Planı Oluştur"
+							onAction={() => navigation.navigate('CreatePlan')}
 						/>
 					}
 				/>
@@ -257,7 +273,14 @@ const PlansScreen = () => {
 					accessibilityRole="button"
 					accessibilityLabel="Yeni plan oluştur"
 				>
-					<MaterialCommunityIcons name="plus" size={28} color={colors.textOnPrimary} />
+					<LinearGradient
+						colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
+						start={{ x: 0, y: 0 }}
+						end={{ x: 1, y: 1 }}
+						style={styles.fabGradient}
+					>
+						<MaterialCommunityIcons name="plus" size={28} color={colors.textOnPrimary} />
+					</LinearGradient>
 				</Pressable>
 			</View>
 
@@ -355,30 +378,67 @@ const styles = StyleSheet.create({
 	filterList: {
 		paddingHorizontal: spacing.base,
 		paddingVertical: spacing.base,
-		gap: spacing.xs,
+		gap: spacing.sm,
+	},
+	filterChip: {
+		height: 34,
+		paddingHorizontal: spacing.base,
+		borderRadius: radius.full,
+		borderWidth: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	filterChipSelected: {
+		backgroundColor: colors.primary,
+		borderColor: colors.primary,
+	},
+	filterChipUnselected: {
+		backgroundColor: colors.surfaceElevated,
+		borderColor: colors.borderLight,
+	},
+	filterChipPressed: {
+		opacity: 0.9,
+	},
+	filterChipIcon: {
+		marginRight: spacing.xs,
+	},
+	filterChipLabel: {
+		...typography.bodySmMedium,
+	},
+	filterChipLabelSelected: {
+		color: colors.textOnPrimary,
+	},
+	filterChipLabelUnselected: {
+		color: colors.textSecondary,
 	},
 	listContent: {
 		paddingHorizontal: spacing.base,
-		paddingBottom: spacing.huge,
+		paddingBottom: spacing.huge + spacing.huge,
 		gap: spacing.sm,
 	},
-	listFooterSpacer: {
-		width: spacing.xs,
-	},
 	listFooterBottom: {
-		height: spacing.xs,
+		height: spacing.md,
 	},
 	fab: {
 		position: 'absolute',
-		right: spacing.base,
-		bottom: spacing.base,
-		width: 58,
-		height: 58,
+		right: spacing.xl,
+		bottom: spacing.xl,
+		width: 56,
+		height: 56,
 		borderRadius: radius.full,
-		backgroundColor: colors.primary,
+		shadowColor: '#1A1A2E',
+		shadowOffset: { width: 0, height: 4 },
+		shadowOpacity: 0.12,
+		shadowRadius: 16,
+		elevation: 6,
+	},
+	fabGradient: {
+		width: '100%',
+		height: '100%',
+		borderRadius: radius.full,
 		alignItems: 'center',
 		justifyContent: 'center',
-		...shadows.lg,
 	},
 	sheetActions: {
 		gap: spacing.sm,
