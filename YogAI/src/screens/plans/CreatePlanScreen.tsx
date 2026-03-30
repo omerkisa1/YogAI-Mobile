@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
@@ -14,12 +14,11 @@ import {
 	View,
 } from 'react-native';
 import axios from 'axios';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useCreatePlan } from '../../features/plans/hooks/useCreatePlan';
 import Button from '../../shared/components/Button';
-import Card from '../../shared/components/Card';
-import Chip from '../../shared/components/Chip';
 import ErrorView from '../../shared/components/ErrorView';
 import {
 	AppLanguage,
@@ -38,8 +37,8 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CreatePlan'>;
 interface LevelOption {
 	key: Level;
 	label: string;
-	description: string;
 	icon: string;
+	gradient: [string, string];
 }
 
 interface FocusOption {
@@ -53,46 +52,61 @@ interface InjuryOption {
 }
 
 const levelOptions: LevelOption[] = [
-	{ key: 'beginner', label: 'Baslangic', description: 'Yumusak akis', icon: 'leaf' },
-	{ key: 'intermediate', label: 'Orta', description: 'Denge ve guc', icon: 'tree' },
-	{ key: 'advanced', label: 'Ileri', description: 'Yuksek yogunluk', icon: 'fire' },
+	{
+		key: 'beginner',
+		label: 'Başlangıç',
+		icon: 'leaf',
+		gradient: [colors.gradientBeginner[0], colors.gradientBeginner[1]],
+	},
+	{
+		key: 'intermediate',
+		label: 'Orta',
+		icon: 'tree',
+		gradient: [colors.gradientIntermediate[0], colors.gradientIntermediate[1]],
+	},
+	{
+		key: 'advanced',
+		label: 'İleri',
+		icon: 'fire',
+		gradient: [colors.gradientAdvanced[0], colors.gradientAdvanced[1]],
+	},
 ];
 
 const durationOptions = [10, 15, 20, 25, 30, 45, 60] as const;
 
 const focusOptions: FocusOption[] = [
-	{ key: 'full_body', label: 'Tam Vucut' },
+	{ key: 'full_body', label: 'Tam Vücut' },
 	{ key: 'legs', label: 'Bacaklar' },
-	{ key: 'back', label: 'Sirt' },
+	{ key: 'back', label: 'Sırt' },
 	{ key: 'core', label: 'Core' },
 	{ key: 'balance', label: 'Denge' },
 	{ key: 'flexibility', label: 'Esneklik' },
 	{ key: 'arms', label: 'Kollar' },
-	{ key: 'hips', label: 'Kalca' },
+	{ key: 'hips', label: 'Kalça' },
 ];
 
 const injuryOptions: InjuryOption[] = [
 	{ key: 'knee_injury', label: 'Diz' },
-	{ key: 'ankle_injury', label: 'Ayak Bilegi' },
-	{ key: 'herniated_disc', label: 'Bel Fitigi' },
+	{ key: 'ankle_injury', label: 'Ayak Bileği' },
+	{ key: 'herniated_disc', label: 'Bel Fıtığı' },
 	{ key: 'low_back_pain', label: 'Bel' },
 	{ key: 'shoulder_injury', label: 'Omuz' },
 	{ key: 'wrist_injury', label: 'Bilek' },
 	{ key: 'neck_injury', label: 'Boyun' },
-	{ key: 'groin_injury', label: 'Kasik' },
-	{ key: 'hip_injury', label: 'Kalca' },
+	{ key: 'groin_injury', label: 'Kasık' },
+	{ key: 'hip_injury', label: 'Kalça' },
 ];
 
 const languageOptions: { key: AppLanguage; label: string }[] = [
-	{ key: 'tr', label: 'Turkce' },
+	{ key: 'tr', label: 'Türkçe' },
 	{ key: 'en', label: 'English' },
 ];
 
 const CreatePlanScreen = ({ navigation, route }: Props) => {
 	const createPlanMutation = useCreatePlan();
 	const pulseAnim = useRef(new Animated.Value(1)).current;
-	const [inlineValidationError, setInlineValidationError] = React.useState<string | null>(null);
-	const [showServerError, setShowServerError] = React.useState(false);
+	const [inlineValidationError, setInlineValidationError] = useState<string | null>(null);
+	const [showServerError, setShowServerError] = useState(false);
 
 	const { control, handleSubmit, watch, setValue } = useForm<CreatePlanRequest>({
 		defaultValues: {
@@ -129,13 +143,13 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 			Animated.sequence([
 				Animated.timing(pulseAnim, {
 					toValue: 1.1,
-					duration: 720,
+					duration: 750,
 					easing: Easing.inOut(Easing.ease),
 					useNativeDriver: true,
 				}),
 				Animated.timing(pulseAnim, {
 					toValue: 1,
-					duration: 720,
+					duration: 750,
 					easing: Easing.inOut(Easing.ease),
 					useNativeDriver: true,
 				}),
@@ -150,7 +164,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 	}, [createPlanMutation.isPending, pulseAnim]);
 
 	const inlineSuggestion = useMemo(
-		() => 'Odak alanını veya süreyi değiştirerek tekrar deneyin.',
+		() => 'Öneri: Odak alanını değiştirmeyi veya süreyi kısaltmayı deneyin.',
 		[],
 	);
 
@@ -216,25 +230,43 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 				keyboardShouldPersistTaps="handled"
 			>
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Seviye Secimi</Text>
+					<Text style={styles.sectionTitle}>Seviye Seçimi</Text>
 					<View style={styles.levelGrid}>
 						{levelOptions.map(level => {
 							const selected = selectedLevel === level.key;
+							const cardContent = (
+								<>
+									<MaterialCommunityIcons
+										name={level.icon}
+										size={32}
+										color={selected ? colors.textOnPrimary : colors.textSecondary}
+									/>
+									<Text style={[styles.levelTitle, selected ? styles.levelTitleSelected : styles.levelTitleUnselected]}>
+										{level.label}
+									</Text>
+								</>
+							);
+
 							return (
 								<Pressable
 									key={level.key}
 									onPress={() => setValue('level', level.key, { shouldValidate: true })}
-									style={[styles.levelCard, selected && styles.levelCardSelected]}
+									style={[styles.levelCardPressable, selected && styles.levelCardPressableSelected]}
 									accessibilityRole="button"
-									accessibilityLabel={`${level.label} seviye sec`}
+									accessibilityLabel={`${level.label} seviye seç`}
 								>
-									<MaterialCommunityIcons
-										name={level.icon}
-										size={24}
-										color={selected ? colors.primary : colors.textSecondary}
-									/>
-									<Text style={[styles.levelTitle, selected && styles.levelTitleSelected]}>{level.label}</Text>
-									<Text style={styles.levelDescription}>{level.description}</Text>
+									{selected ? (
+										<LinearGradient
+											colors={[level.gradient[0], level.gradient[1]]}
+											start={{ x: 0, y: 0 }}
+											end={{ x: 1, y: 1 }}
+											style={[styles.levelCard, styles.levelCardSelected]}
+										>
+											{cardContent}
+										</LinearGradient>
+									) : (
+										<View style={[styles.levelCard, styles.levelCardUnselected]}>{cardContent}</View>
+									)}
 								</Pressable>
 							);
 						})}
@@ -242,7 +274,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Süre: {selectedDuration} dakika</Text>
+					<Text style={styles.sectionTitle}>Süre</Text>
 					<FlatList
 						horizontal
 						data={durationOptions}
@@ -252,29 +284,37 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 						maxToRenderPerBatch={10}
 						windowSize={5}
 						removeClippedSubviews
-						getItemLayout={(_, index) => ({ length: 72, offset: 72 * index, index })}
-						ListHeaderComponent={<View />}
-						ListFooterComponent={<View style={styles.durationFooter} />}
+						getItemLayout={(_, index) => ({ length: 82, offset: 82 * index, index })}
 						renderItem={({ item }) => (
-							<Chip
-								label={`${item}`}
-								selected={item === selectedDuration}
+							<Pressable
 								onPress={() => setValue('duration', item, { shouldValidate: true })}
-							/>
+								style={[styles.durationChip, item === selectedDuration ? styles.durationChipSelected : styles.durationChipUnselected]}
+								accessibilityRole="button"
+								accessibilityLabel={`${item} dakika seç`}
+							>
+								<Text style={[styles.durationChipText, item === selectedDuration ? styles.durationChipTextSelected : styles.durationChipTextUnselected]}>
+									{item}dk
+								</Text>
+							</Pressable>
 						)}
 					/>
 				</View>
 
 				<View style={styles.section}>
-					<Text style={styles.sectionTitle}>Odak Alani</Text>
+					<Text style={styles.sectionTitle}>Odak Alanı</Text>
 					<View style={styles.chipWrap}>
 						{focusOptions.map(focus => (
-							<Chip
+							<Pressable
 								key={focus.key}
-								label={focus.label}
-								selected={selectedFocus === focus.key}
 								onPress={() => setValue('focus_area', focus.key, { shouldValidate: true })}
-							/>
+								style={[styles.focusChip, selectedFocus === focus.key ? styles.focusChipSelected : styles.focusChipUnselected]}
+								accessibilityRole="button"
+								accessibilityLabel={`${focus.label} odak alanı seç`}
+							>
+								<Text style={[styles.focusChipText, selectedFocus === focus.key ? styles.focusChipTextSelected : styles.focusChipTextUnselected]}>
+									{focus.label}
+								</Text>
+							</Pressable>
 						))}
 					</View>
 				</View>
@@ -283,13 +323,25 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					<Text style={styles.sectionTitle}>Sakatlıklarınız (varsa)</Text>
 					<View style={styles.chipWrap}>
 						{injuryOptions.map(injury => (
-							<Chip
+							<Pressable
 								key={injury.key}
-								label={injury.label}
-								selected={selectedInjuries.includes(injury.key)}
 								onPress={() => toggleInjury(injury.key)}
-								tone="warning"
-							/>
+								style={[
+									styles.injuryChip,
+									selectedInjuries.includes(injury.key) ? styles.injuryChipSelected : styles.injuryChipUnselected,
+								]}
+								accessibilityRole="button"
+								accessibilityLabel={`${injury.label} sakatlık seç`}
+							>
+								<Text
+									style={[
+										styles.injuryChipText,
+										selectedInjuries.includes(injury.key) ? styles.injuryChipTextSelected : styles.injuryChipTextUnselected,
+									]}
+								>
+									{injury.label}
+								</Text>
+							</Pressable>
 						))}
 					</View>
 				</View>
@@ -307,7 +359,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 									variant={selected ? 'primary' : 'outline'}
 									size="md"
 									fullWidth
-									accessibilityLabel={`${language.label} sec`}
+									accessibilityLabel={`${language.label} seç`}
 								/>
 							);
 						})}
@@ -315,14 +367,14 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 				</View>
 
 				{inlineValidationError ? (
-					<Card variant="outlined" style={styles.inlineErrorCard}>
+					<View style={styles.inlineErrorCard}>
 						<View style={styles.inlineErrorHeader}>
-							<MaterialCommunityIcons name="alert-circle-outline" size={20} color={colors.error} />
+							<MaterialCommunityIcons name="alert-circle" size={20} color={colors.error} />
 							<Text style={styles.inlineErrorTitle}>Plan oluşturma hatası</Text>
 						</View>
 						<Text style={styles.inlineErrorText}>{inlineValidationError}</Text>
 						<Text style={styles.inlineSuggestion}>{inlineSuggestion}</Text>
-					</Card>
+					</View>
 				) : null}
 
 				{showServerError ? (
@@ -358,11 +410,13 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 
 			{createPlanMutation.isPending ? (
 				<View style={styles.overlay}>
-					<Animated.View style={[styles.overlayIconWrap, { transform: [{ scale: pulseAnim }] }]}>
-						<MaterialCommunityIcons name="flower-lotus" size={42} color={colors.primary} />
-					</Animated.View>
-					<Text style={styles.overlayTitle}>AI planınızı oluşturuyor...</Text>
-					<Text style={styles.overlaySubtitle}>Bu işlem 10-30 saniye sürebilir</Text>
+					<View style={styles.overlayCard}>
+						<Animated.View style={[styles.overlayIconWrap, { transform: [{ scale: pulseAnim }] }]}>
+							<MaterialCommunityIcons name="yoga" size={80} color={colors.primary} />
+						</Animated.View>
+						<Text style={styles.overlayTitle}>AI planınızı oluşturuyor...</Text>
+						<Text style={styles.overlaySubtitle}>Bu 10-30 saniye sürebilir</Text>
+					</View>
 				</View>
 			) : null}
 		</SafeAreaView>
@@ -392,50 +446,141 @@ const styles = StyleSheet.create({
 	},
 	levelGrid: {
 		flexDirection: 'row',
-		gap: spacing.sm,
+		gap: spacing.md,
+	},
+	levelCardPressable: {
+		flex: 1,
+		borderRadius: radius.lg,
+	},
+	levelCardPressableSelected: {
+		transform: [{ scale: 1.02 }],
 	},
 	levelCard: {
 		flex: 1,
+		minHeight: 132,
 		padding: spacing.base,
 		borderRadius: radius.lg,
-		borderWidth: 1,
-		borderColor: colors.border,
-		backgroundColor: colors.surface,
-		gap: spacing.xs,
-	},
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: spacing.sm,
+		shadowColor: '#1A1A2E',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.06,
+		shadowRadius: 12,
+		elevation: 3,
+ 	},
 	levelCardSelected: {
-		borderColor: colors.primary,
-		backgroundColor: colors.primarySoft,
+		borderWidth: 1,
+		borderColor: colors.borderLight,
 	},
+	levelCardUnselected: {
+		borderWidth: 1,
+		borderColor: colors.borderLight,
+		backgroundColor: colors.surfaceElevated,
+ 	},
 	levelTitle: {
-		...typography.bodyMedium,
-		color: colors.text,
+		...typography.bodySmMedium,
 	},
 	levelTitleSelected: {
-		color: colors.primaryDark,
-	},
-	levelDescription: {
-		...typography.caption,
+		color: colors.textOnPrimary,
+ 	},
+	levelTitleUnselected: {
 		color: colors.textSecondary,
 	},
 	durationList: {
-		gap: spacing.xs,
+		paddingHorizontal: spacing.base,
+		gap: spacing.sm,
 	},
-	durationFooter: {
-		width: spacing.xs,
+	durationChip: {
+		height: 38,
+		paddingHorizontal: spacing.lg,
+		borderRadius: radius.full,
+		alignItems: 'center',
+		justifyContent: 'center',
+		borderWidth: 1,
+	},
+	durationChipSelected: {
+		borderColor: colors.primary,
+		backgroundColor: colors.primary,
+	},
+	durationChipUnselected: {
+		backgroundColor: colors.surfaceElevated,
+		borderColor: colors.borderLight,
+	},
+	durationChipText: {
+		...typography.bodySmMedium,
+	},
+	durationChipTextSelected: {
+		color: colors.textOnPrimary,
+ 	},
+	durationChipTextUnselected: {
+		color: colors.textSecondary,
 	},
 	chipWrap: {
 		flexDirection: 'row',
 		flexWrap: 'wrap',
-		gap: spacing.xs,
+		gap: spacing.sm,
+	},
+	focusChip: {
+		height: 38,
+		paddingHorizontal: spacing.base,
+		borderRadius: radius.full,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	focusChipSelected: {
+		backgroundColor: colors.primary,
+		borderColor: colors.primary,
+	},
+	focusChipUnselected: {
+		backgroundColor: colors.surfaceElevated,
+		borderColor: colors.borderLight,
+	},
+	focusChipText: {
+		...typography.bodySmMedium,
+	},
+	focusChipTextSelected: {
+		color: colors.textOnPrimary,
+	},
+	focusChipTextUnselected: {
+		color: colors.textSecondary,
+	},
+	injuryChip: {
+		height: 38,
+		paddingHorizontal: spacing.base,
+		borderRadius: radius.full,
+		borderWidth: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	injuryChipSelected: {
+		backgroundColor: '#FFF3E0',
+		borderColor: colors.warning,
+	},
+	injuryChipUnselected: {
+		backgroundColor: colors.surfaceElevated,
+		borderColor: colors.borderLight,
+	},
+	injuryChipText: {
+		...typography.bodySmMedium,
+	},
+	injuryChipTextSelected: {
+		color: '#E65100',
+	},
+	injuryChipTextUnselected: {
+		color: colors.textSecondary,
 	},
 	languageRow: {
 		flexDirection: 'row',
 		gap: spacing.sm,
 	},
 	inlineErrorCard: {
-		backgroundColor: '#FFF0EF',
-		borderColor: '#FFD1CE',
+		backgroundColor: '#FF3B300D',
+		borderColor: '#FF3B3033',
+		borderWidth: 1,
+		borderRadius: radius.md,
+		padding: spacing.base,
 	},
 	inlineErrorHeader: {
 		flexDirection: 'row',
@@ -466,23 +611,31 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		paddingHorizontal: spacing.xl,
 	},
-	overlayIconWrap: {
-		width: 92,
-		height: 92,
-		borderRadius: radius.full,
+	overlayCard: {
 		backgroundColor: colors.surface,
+		borderRadius: radius.xl,
+		paddingHorizontal: spacing.xl,
+		paddingVertical: spacing.xl,
+		alignItems: 'center',
+		justifyContent: 'center',
+		minWidth: 280,
+	},
+	overlayIconWrap: {
+		width: 96,
+		height: 96,
+		borderRadius: radius.full,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginBottom: spacing.base,
 	},
 	overlayTitle: {
 		...typography.h4,
-		color: colors.textOnPrimary,
+		color: colors.text,
 		marginBottom: spacing.xs,
 	},
 	overlaySubtitle: {
 		...typography.bodySm,
-		color: colors.surface,
+		color: colors.textSecondary,
 		textAlign: 'center',
 	},
 });
