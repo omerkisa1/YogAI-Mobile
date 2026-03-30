@@ -1,21 +1,25 @@
 ﻿import React from 'react';
-import { SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, SafeAreaView, StatusBar, StyleSheet, Text, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
-import { radius, spacing } from '../../theme/spacing';
+import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
 const AppSplash = () => {
 	return (
 		<SafeAreaView style={styles.safeArea}>
-			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
-			<View style={styles.content}>
-				<View style={styles.logoWrap}>
-					<MaterialCommunityIcons name="flower-lotus" size={48} color={colors.primary} />
-				</View>
+			<StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
+			<LinearGradient
+				colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
+				start={{ x: 0, y: 0 }}
+				end={{ x: 1, y: 1 }}
+				style={styles.content}
+			>
+				<MaterialCommunityIcons name="yoga" size={80} color={colors.textOnPrimary} />
 				<Text style={styles.title}>YogAI</Text>
-				<Text style={styles.subtitle}>Kişisel AI yoga asistanınız hazırlanıyor</Text>
-			</View>
+				<ActivityIndicator size="small" color={colors.textOnPrimary} style={styles.loader} />
+			</LinearGradient>
 		</SafeAreaView>
 	);
 };
@@ -23,7 +27,7 @@ const AppSplash = () => {
 const styles = StyleSheet.create({
 	safeArea: {
 		flex: 1,
-		backgroundColor: colors.background,
+		backgroundColor: colors.primaryDark,
 	},
 	content: {
 		flex: 1,
@@ -31,24 +35,13 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		paddingHorizontal: spacing.base,
 	},
-	logoWrap: {
-		width: 96,
-		height: 96,
-		borderRadius: radius.full,
-		backgroundColor: colors.primarySoft,
-		alignItems: 'center',
-		justifyContent: 'center',
-		marginBottom: spacing.base,
-	},
 	title: {
-		...typography.h1,
-		color: colors.primary,
+		...typography.display,
+		color: colors.textOnPrimary,
+		marginTop: spacing.base,
 	},
-	subtitle: {
-		...typography.bodySm,
-		color: colors.textSecondary,
-		marginTop: spacing.xs,
-		textAlign: 'center',
+	loader: {
+		marginTop: spacing.lg,
 	},
 });
 

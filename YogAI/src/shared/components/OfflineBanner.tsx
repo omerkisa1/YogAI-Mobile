@@ -1,5 +1,6 @@
-﻿import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+﻿import React, { useEffect, useRef } from 'react';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
 import { spacing } from '../../theme/spacing';
@@ -10,24 +11,53 @@ interface OfflineBannerProps {
 }
 
 const OfflineBanner = ({ visible }: OfflineBannerProps) => {
-	if (!visible) {
-		return null;
-	}
+	const insets = useSafeAreaInsets();
+	const translateY = useRef(new Animated.Value(visible ? 0 : -52)).current;
+	const opacity = useRef(new Animated.Value(visible ? 1 : 0)).current;
+
+	useEffect(() => {
+		Animated.parallel([
+			Animated.timing(translateY, {
+				toValue: visible ? 0 : -52,
+				duration: 220,
+				useNativeDriver: true,
+			}),
+			Animated.timing(opacity, {
+				toValue: visible ? 1 : 0,
+				duration: 220,
+				useNativeDriver: true,
+			}),
+		]).start();
+	}, [opacity, translateY, visible]);
 
 	return (
-		<View style={styles.container}>
-			<MaterialCommunityIcons name="wifi-off" size={16} color={colors.textOnPrimary} />
-			<Text style={styles.text}>İnternet Bağlantısi yok</Text>
-		</View>
+		<Animated.View
+			pointerEvents={visible ? 'auto' : 'none'}
+			style={[
+				styles.wrapper,
+				{ top: insets.top, transform: [{ translateY }], opacity },
+			]}
+		>
+			<View style={styles.container}>
+				<MaterialCommunityIcons name="wifi-off" size={16} color={colors.textOnPrimary} />
+				<Text style={styles.text}>İnternet bağlantısı yok</Text>
+			</View>
+		</Animated.View>
 	);
 };
 
 const styles = StyleSheet.create({
+	wrapper: {
+		position: 'absolute',
+		left: 0,
+		right: 0,
+		zIndex: 999,
+	},
 	container: {
 		width: '100%',
+		height: 36,
 		backgroundColor: colors.error,
 		paddingHorizontal: spacing.base,
-		paddingVertical: spacing.xs,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'center',
