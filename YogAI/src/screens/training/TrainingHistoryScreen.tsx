@@ -9,14 +9,18 @@ import {
 	Text,
 	View,
 } from 'react-native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import LinearGradient from 'react-native-linear-gradient';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useTrainingSessions, useTrainingStats } from '../../features/training/hooks/useTraining';
+import Button from '../../shared/components/Button';
 import Card from '../../shared/components/Card';
-import EmptyState from '../../shared/components/EmptyState';
 import ErrorView from '../../shared/components/ErrorView';
 import ProgressBar from '../../shared/components/ProgressBar';
 import SkeletonLoader from '../../shared/components/SkeletonLoader';
 import { TrainingSession } from '../../shared/types/training';
+import { MainTabParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
@@ -46,18 +50,32 @@ const formatHours = (seconds?: number) => {
 	return (seconds / 3600).toFixed(1);
 };
 
+const getAccuracyColor = (accuracy: number) => {
+	if (accuracy >= 80) {
+		return colors.success;
+	}
+
+	if (accuracy >= 50) {
+		return colors.warning;
+	}
+
+	return colors.error;
+};
+
 const TrainingHistoryScreen = () => {
+	const navigation = useNavigation<NavigationProp<MainTabParamList>>();
 	const sessionsQuery = useTrainingSessions();
 	const statsQuery = useTrainingStats();
 	const [refreshing, setRefreshing] = useState(false);
 
 	const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data]);
-	const stats = statsQuery.data ?? {
-		total_sessions: 0,
-		total_duration_sec: 0,
-		average_accuracy: 0,
-		current_streak: 0,
-	};
+	const stats = statsQuery.data;
+	const totalSessions = stats?.total_sessions ?? 0;
+	const totalDurationSeconds = stats?.total_duration_sec ?? 0;
+	const avgAccuracy = stats?.average_accuracy ?? 0;
+	const displayAccuracy = Number.isNaN(avgAccuracy) ? 0 : Math.round(avgAccuracy);
+	const heroProgress = totalSessions > 0 ? displayAccuracy : 0;
+	const totalLabel = `Toplam: ${totalSessions} antrenman`;
 
 	const onRefresh = useCallback(async () => {
 		setRefreshing(true);
@@ -97,7 +115,10 @@ const TrainingHistoryScreen = () => {
 	}
 
 	const renderSessionItem = ({ item }: { item: TrainingSession }) => {
-		const sessionAccuracy = Math.round(item.average_accuracy ?? 0);
+		const rawAccuracy = item.average_accuracy ?? 0;
+		const normalizedAccuracy = Number.isNaN(rawAccuracy) ? 0 : Math.round(rawAccuracy);
+		const sessionAccuracy = Math.max(0, Math.min(100, normalizedAccuracy));
+		const scoreColor = getAccuracyColor(sessionAccuracy);
 		const durationLabel = formatMinutes(item.total_duration_sec);
 		const completedMoveCount = item.results?.length ?? 0;
 
@@ -116,11 +137,22 @@ const TrainingHistoryScreen = () => {
 				accessibilityLabel="Antrenman oturumu detay"
 			>
 				<Card variant="default" style={styles.sessionCard}>
-					<Text style={styles.sessionTitle}>Plan #{item.plan_id.slice(0, 8)}</Text>
-					<Text style={styles.sessionMeta}>{formatDate(item.started_at)} • {durationLabel}</Text>
-					<Text style={styles.sessionScore}>Skor: %{sessionAccuracy}</Text>
-					<ProgressBar progress={sessionAccuracy} color={colors.success} />
-					<Text style={styles.sessionMoves}>{completedMoveCount} hareket tamamlandi</Text>
+					<View style={styles.sessionHeaderRow}>
+						<Text style={styles.sessionTitle}>Plan #{item.plan_id.slice(0, 8)}</Text>
+						<Text style={[styles.sessionScore, { color: scoreColor }]}>%{sessionAccuracy}</Text>
+					</View>
+					<Text style={styles.sessionDate}>{formatDate(item.started_at)}</Text>
+					<ProgressBar progress={sessionAccuracy} color={scoreColor} height={4} />
+					<View style={styles.sessionMetaRow}>
+						<View style={styles.sessionMetaItem}>
+							<MaterialCommunityIcons name="clock-outline" size={14} color={colors.textSecondary} />
+							<Text style={styles.sessionMetaText}>{durationLabel}</Text>
+						</View>
+						<View style={styles.sessionMetaItem}>
+							<MaterialCommunityIcons name="yoga" size={14} color={colors.textSecondary} />
+							<Text style={styles.sessionMetaText}>{completedMoveCount} hareket</Text>
+						</View>
+					</View>
 				</Card>
 			</Pressable>
 		);
@@ -137,25 +169,57 @@ const TrainingHistoryScreen = () => {
 				maxToRenderPerBatch={10}
 				windowSize={5}
 				removeClippedSubviews
-				getItemLayout={(_, index) => ({ length: 142, offset: 142 * index, index })}
+				getItemLayout={(_, index) => ({ length: 152, offset: 152 * index, index })}
 				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
 				ListHeaderComponent={
 					<View>
 						<Text style={styles.pageTitle}>Antrenmanlarım</Text>
-						<Card variant="elevated" style={styles.statsCard}>
-							<Text style={styles.statsLine}>Toplam: {stats.total_sessions} antrenman</Text>
-							<Text style={styles.statsLine}>Ortalama skor: %{Math.round(stats.average_accuracy)}</Text>
-							<Text style={styles.statsLine}>Toplam süre: {formatHours(stats.total_duration_sec)} saat</Text>
-							<ProgressBar progress={Math.round(stats.average_accuracy)} color={colors.primary} />
-						</Card>
+						<LinearGradient
+							colors={[colors.gradientHero[0], colors.gradientHero[1]]}
+							start={{ x: 0, y: 0 }}
+							end={{ x: 1, y: 1 }}
+							style={styles.heroCard}
+						>
+							<View style={styles.heroStatsRow}>
+								<View style={styles.heroStatItem}>
+									<MaterialCommunityIcons name="calendar-check-outline" size={20} color={colors.textOnDark} />
+									<Text style={styles.heroStatValue}>{totalSessions}</Text>
+									<Text style={styles.heroStatLabel}>antrenman</Text>
+								</View>
+								<View style={styles.heroSeparator} />
+								<View style={styles.heroStatItem}>
+									<MaterialCommunityIcons name="clock-outline" size={20} color={colors.textOnDark} />
+									<Text style={styles.heroStatValue}>{formatHours(totalDurationSeconds)}</Text>
+									<Text style={styles.heroStatLabel}>saat</Text>
+								</View>
+								<View style={styles.heroSeparator} />
+								<View style={styles.heroStatItem}>
+									<MaterialCommunityIcons name="bullseye-arrow" size={20} color={colors.textOnDark} />
+									<Text style={styles.heroStatValue}>%{displayAccuracy}</Text>
+									<Text style={styles.heroStatLabel}>ort. skor</Text>
+								</View>
+							</View>
+							<Text style={styles.heroSummary}>{totalLabel}</Text>
+							{heroProgress > 0 ? <ProgressBar progress={heroProgress} color={colors.textOnPrimary} height={4} /> : null}
+						</LinearGradient>
 					</View>
 				}
 				ListEmptyComponent={
-					<EmptyState
-						icon="meditation"
-						title="Henüz antrenman yapmadınız"
-						description="İlk antrenmanınıza başlayarak ilerlemenizi takip edin."
-					/>
+					<View style={styles.emptyContainer}>
+						<View style={styles.emptyIconWrap}>
+							<MaterialCommunityIcons name="meditation" size={32} color={colors.accent} />
+						</View>
+						<Text style={styles.emptyTitle}>Henüz antrenman yapmadınız</Text>
+						<Text style={styles.emptyDescription}>İlk antrenmanınıza başlayarak ilerlemenizi takip edin.</Text>
+						<Button
+							title="İlk Antrenmanı Başlat"
+							onPress={() => navigation.navigate('Plans')}
+							variant="primary"
+							size="lg"
+							fullWidth={false}
+							accessibilityLabel="İlk antrenmanı başlat"
+						/>
+					</View>
 				}
 				ListFooterComponent={<View style={styles.listFooter} />}
 			/>
@@ -184,7 +248,7 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	listFooter: {
-		height: spacing.xs,
+		height: spacing.sm,
 	},
 	pageTitle: {
 		...typography.h2,
@@ -192,36 +256,110 @@ const styles = StyleSheet.create({
 		marginTop: spacing.sm,
 		marginBottom: spacing.sm,
 	},
-	statsCard: {
+	heroCard: {
+		padding: spacing.xl,
+		borderRadius: radius.xl,
 		gap: spacing.sm,
 		marginBottom: spacing.base,
+		borderWidth: 1,
+		borderColor: 'rgba(255,255,255,0.18)',
 	},
-	statsLine: {
-		...typography.bodySm,
-		color: colors.textSecondary,
+	heroStatsRow: {
+		flexDirection: 'row',
+		alignItems: 'stretch',
+		justifyContent: 'space-between',
+	},
+	heroStatItem: {
+		flex: 1,
+		alignItems: 'center',
+		gap: spacing.xs,
+	},
+	heroSeparator: {
+		width: 1,
+		backgroundColor: 'rgba(255,255,255,0.2)',
+		marginHorizontal: spacing.sm,
+	},
+	heroStatValue: {
+		...typography.h1,
+		color: colors.textOnDark,
+		fontWeight: '700',
+	},
+	heroStatLabel: {
+		...typography.caption,
+		color: 'rgba(255,255,255,0.72)',
+	},
+	heroSummary: {
+		...typography.caption,
+		color: 'rgba(255,255,255,0.85)',
+	},
+	sessionHeaderRow: {
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		alignItems: 'center',
 	},
 	sessionPressable: {
 		borderRadius: radius.lg,
 	},
 	sessionCard: {
-		gap: spacing.xs,
+		gap: spacing.sm,
+		paddingVertical: spacing.md,
 	},
 	sessionTitle: {
-		...typography.bodyMedium,
+		...typography.h4,
 		color: colors.text,
 	},
-	sessionMeta: {
+	sessionDate: {
 		...typography.bodySm,
 		color: colors.textSecondary,
 	},
 	sessionScore: {
 		...typography.bodySmMedium,
-		color: colors.text,
-		marginTop: spacing.xs,
 	},
-	sessionMoves: {
+	sessionMetaRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		columnGap: spacing.base,
+		rowGap: spacing.xs,
+		flexWrap: 'wrap',
+	},
+	sessionMetaItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.xs,
+	},
+	sessionMetaText: {
 		...typography.caption,
 		color: colors.textMuted,
+	},
+	emptyContainer: {
+		alignItems: 'center',
+		justifyContent: 'center',
+		padding: spacing.xl,
+		borderRadius: radius.xl,
+		backgroundColor: colors.surface,
+		borderWidth: 1,
+		borderColor: colors.borderLight,
+	},
+	emptyIconWrap: {
+		width: 64,
+		height: 64,
+		borderRadius: radius.full,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: colors.accentSoft,
+		marginBottom: spacing.base,
+	},
+	emptyTitle: {
+		...typography.h4,
+		color: colors.text,
+		textAlign: 'center',
+		marginBottom: spacing.xs,
+	},
+	emptyDescription: {
+		...typography.bodySm,
+		color: colors.textSecondary,
+		textAlign: 'center',
+		marginBottom: spacing.base,
 	},
 });
 

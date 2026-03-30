@@ -28,7 +28,7 @@ const MainTabs = () => {
 		>
 			<Tab.Screen name="Home" component={HomeScreen} options={{ headerShown: false, title: 'Ana Sayfa' }} />
 			<Tab.Screen name="Plans" component={PlansScreen} options={{ headerShown: false, title: 'Planlarım' }} />
-			<Tab.Screen name="Training" component={TrainingHistoryScreen} options={{ title: 'Antrenman' }} />
+			<Tab.Screen name="Training" component={TrainingHistoryScreen} options={{ headerShown: false, title: 'Antrenman' }} />
 			<Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil' }} />
 		</Tab.Navigator>
 	);
