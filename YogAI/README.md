@@ -63,6 +63,55 @@ iOS (macOS):
 npx react-native run-ios
 ```
 
+## Android Takilma Cozumu (Offline / %87)
+
+Emulator offline oldugunda veya build %87 civarinda uzun sure beklediginde su akisi kullanin:
+
+1. ADB sifirla:
+
+```bash
+npm run android:adb:reset
+```
+
+2. Emulatoru headless baslat:
+
+```bash
+npm run android:emu:headless
+```
+
+3. Emulator icin hizli ve stabil kurulum (x86_64):
+
+```bash
+npm run android:gradle:emu
+```
+
+Tek komutta toparla + kur + ac:
+
+```bash
+npm run android:recover:emu
+```
+
+4. Ortam kontrolu:
+
+```bash
+npm run android:doctor
+```
+
+Not: Bazi Windows surumlerinde `react-native doctor` komutu `wmic` olmadigi icin hata verebilir.
+Bu durumda WMIC gerektirmeyen kontrol icin sunu kullanin:
+
+```bash
+npm run android:healthcheck
+```
+
+Workspace kokunden ayni komutlar:
+
+```bash
+npm run mobile:android:recover
+npm run mobile:android:launch
+npm run mobile:healthcheck
+```
+
 ## Notlar
 
 - Backend Authorization header formati: Bearer <firebase_id_token>

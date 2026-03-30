@@ -5,6 +5,13 @@
     "mobile:start": "npm --prefix ./YogAI run start",
     "mobile:start:reset": "npm --prefix ./YogAI run start -- --reset-cache",
     "mobile:android": "npm --prefix ./YogAI run android",
+    "mobile:android:emu": "npm --prefix ./YogAI run android:gradle:emu",
+    "mobile:android:recover": "npm --prefix ./YogAI run android:recover:emu",
+    "mobile:android:launch": "npm --prefix ./YogAI run android:launch",
+    "mobile:adb:reset": "npm --prefix ./YogAI run android:adb:reset",
+    "mobile:emu:start": "npm --prefix ./YogAI run android:emu:headless",
+    "mobile:doctor": "npm --prefix ./YogAI run android:doctor",
+    "mobile:healthcheck": "npm --prefix ./YogAI run android:healthcheck",
     "mobile:ios": "npm --prefix ./YogAI run ios"
   },
   "devDependencies": {
