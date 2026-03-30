@@ -4,7 +4,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../theme/colors';
-import { spacing } from '../theme/spacing';
+import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { MainTabParamList } from './types';
 
@@ -16,8 +16,8 @@ interface TabMeta {
 
 const tabMetaMap: Record<keyof MainTabParamList, TabMeta> = {
 	Home: { label: 'Ana Sayfa', activeIcon: 'home', inactiveIcon: 'home-outline' },
-	Plans: { label: 'Planlar', activeIcon: 'calendar', inactiveIcon: 'calendar-outline' },
-	Training: { label: 'Antrenman', activeIcon: 'yoga', inactiveIcon: 'meditation' },
+	Plans: { label: 'Planlar', activeIcon: 'calendar-text', inactiveIcon: 'calendar-text-outline' },
+	Training: { label: 'Antrenman', activeIcon: 'yoga', inactiveIcon: 'yoga' },
 	Profile: { label: 'Profil', activeIcon: 'account', inactiveIcon: 'account-outline' },
 };
 
@@ -65,8 +65,9 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 							accessibilityState={isFocused ? { selected: true } : {}}
 							accessibilityLabel={accessibilityLabel}
 						>
+							{isFocused ? <View style={styles.activeIndicator} /> : <View style={styles.inactiveIndicator} />}
 							<MaterialCommunityIcons name={icon} size={24} color={color} />
-							<Text style={[styles.tabLabel, { color }]}>{meta.label}</Text>
+							<Text style={[styles.tabLabel, isFocused ? styles.tabLabelActive : styles.tabLabelInactive]}>{meta.label}</Text>
 						</Pressable>
 					);
 				})}
@@ -79,9 +80,9 @@ const styles = StyleSheet.create({
 	wrapper: {
 		backgroundColor: colors.surface,
 		borderTopWidth: 1,
-		borderTopColor: colors.border,
+		borderTopColor: colors.borderLight,
 		paddingHorizontal: spacing.base,
-		paddingTop: spacing.sm,
+		paddingTop: spacing.xs,
 	},
 	row: {
 		flexDirection: 'row',
@@ -92,11 +93,34 @@ const styles = StyleSheet.create({
 		flex: 1,
 		alignItems: 'center',
 		justifyContent: 'center',
-		paddingVertical: spacing.xs,
+		paddingTop: spacing.xs,
+		paddingBottom: spacing.xs,
 		gap: spacing.xs,
 	},
+	activeIndicator: {
+		width: 28,
+		height: 3,
+		borderRadius: radius.full,
+		backgroundColor: colors.primary,
+		marginBottom: spacing.xs,
+	},
+	inactiveIndicator: {
+		width: 28,
+		height: 3,
+		borderRadius: radius.full,
+		backgroundColor: 'transparent',
+		marginBottom: spacing.xs,
+	},
 	tabLabel: {
+		textAlign: 'center',
+	},
+	tabLabelActive: {
 		...typography.captionMedium,
+		color: colors.primary,
+	},
+	tabLabelInactive: {
+		...typography.caption,
+		color: colors.textMuted,
 	},
 	pressed: {
 		opacity: 0.85,
