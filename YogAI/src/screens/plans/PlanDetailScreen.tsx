@@ -100,6 +100,7 @@ const ExerciseItem = ({
 	});
 	const categoryColor = categoryColorMap[exercise.category] ?? colors.textMuted;
 	const categoryLabel = categoryLabelMap[exercise.category] ?? (exercise.category || 'unknown');
+	const exerciseCardAccentColorStyle = { borderLeftColor: categoryColor };
 
 	return (
 		<Touchable
@@ -111,7 +112,7 @@ const ExerciseItem = ({
 		>
 			<Card
 				variant="default"
-				style={[styles.exerciseCard, { borderLeftWidth: 4, borderLeftColor: categoryColor }]}
+				style={[styles.exerciseCard, styles.exerciseCardAccent, exerciseCardAccentColorStyle]}
 			>
 				<View style={styles.exerciseHeaderRow}>
 					<View style={styles.exerciseNumberBadge}>
@@ -322,7 +323,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 				showsVerticalScrollIndicator={false}
 			>
 				<LinearGradient
-					colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
+					colors={[colors.gradientHero[0], colors.gradientHero[1]]}
 					start={{ x: 0, y: 0 }}
 					end={{ x: 1, y: 1 }}
 					style={[styles.hero, { paddingTop: insets.top + spacing.base }]}
@@ -585,6 +586,9 @@ const styles = StyleSheet.create({
 	exerciseCard: {
 		gap: spacing.sm,
 		paddingLeft: spacing.sm,
+	},
+	exerciseCardAccent: {
+		borderLeftWidth: 4,
 	},
 	exerciseHeaderRow: {
 		flexDirection: 'row',

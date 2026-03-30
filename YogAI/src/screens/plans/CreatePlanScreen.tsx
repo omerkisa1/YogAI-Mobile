@@ -35,6 +35,7 @@ import {
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
+import { cardStyle } from '../../theme/shadows';
 import { typography } from '../../theme/typography';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreatePlan'>;
@@ -159,7 +160,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 	}));
 
 	const inlineSuggestion = useMemo(
-		() => 'Öneri: Odak alanını değiştirmeyi veya süreyi kısaltmayı deneyin.',
+		() => 'Öneri: Süreyi kısaltmayı veya odak alanını genişletmeyi deneyin.',
 		[],
 	);
 
@@ -455,6 +456,7 @@ const styles = StyleSheet.create({
 		transform: [{ scale: 1.02 }],
 	},
 	levelCard: {
+		...cardStyle,
 		flex: 1,
 		minHeight: 132,
 		padding: spacing.base,
@@ -462,11 +464,6 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: spacing.sm,
-		shadowColor: '#1A1A2E',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.06,
-		shadowRadius: 12,
-		elevation: 3,
  	},
 	levelCardSelected: {
 		borderWidth: 1,

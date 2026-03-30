@@ -30,8 +30,8 @@ const goals: { key: Goal; label: string }[] = [
 	{ key: 'strength', label: 'Güç' },
 	{ key: 'balance', label: 'Denge' },
 	{ key: 'stress_relief', label: 'Stres Azaltma' },
-	{ key: 'mobility', label: 'Mobilite' },
-	{ key: 'posture', label: 'Postür' },
+	{ key: 'mobility', label: 'Kilo' },
+	{ key: 'posture', label: 'Meditasyon' },
 ];
 
 const injuries: { key: Injury; label: string }[] = [

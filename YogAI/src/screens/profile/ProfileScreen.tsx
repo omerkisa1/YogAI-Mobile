@@ -38,8 +38,8 @@ const goalLabelMap: Record<Goal, string> = {
 	stress_relief: 'Stres Azaltma',
 	strength: 'Güç',
 	balance: 'Denge',
-	mobility: 'Mobilite',
-	posture: 'Postür',
+	mobility: 'Kilo',
+	posture: 'Meditasyon',
 };
 
 const injuryLabelMap: Record<Injury, string> = {

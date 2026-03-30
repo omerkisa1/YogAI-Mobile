@@ -221,7 +221,7 @@ const TrainingHistoryScreen = () => {
 							<MaterialCommunityIcons name="meditation" size={32} color={colors.accent} />
 						</View>
 						<Text style={styles.emptyTitle}>Henüz antrenman yapmadınız</Text>
-						<Text style={styles.emptyDescription}>İlk antrenmanınıza başlayarak ilerlemenizi takip edin.</Text>
+						<Text style={styles.emptyDescription}>Bir plan seçerek ilk antrenmanınıza başlayın.</Text>
 						<Button
 							title="Planlara Git"
 							onPress={() => navigation.navigate('Plans')}

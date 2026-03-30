@@ -28,6 +28,7 @@ import { Plan } from '../../shared/types/plan';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
+import { cardStyle } from '../../theme/shadows';
 import { typography } from '../../theme/typography';
 
 interface StatCardData {
@@ -448,18 +449,12 @@ const styles = StyleSheet.create({
 		marginBottom: spacing.lg,
 	},
 	statCard: {
+		...cardStyle,
 		width: '48%',
 		minHeight: 120,
 		padding: spacing.base,
 		borderRadius: radius.lg,
-		borderWidth: 1,
-		borderColor: colors.borderLight,
 		justifyContent: 'space-between',
-		shadowColor: '#1A1A2E',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.06,
-		shadowRadius: 12,
-		elevation: 3,
 	},
 	statValue: {
 		...typography.h2,
@@ -489,16 +484,10 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	quickStartCard: {
+		...cardStyle,
 		minHeight: 184,
 		borderRadius: radius.xl,
 		overflow: 'hidden',
-		borderWidth: 1,
-		borderColor: colors.borderLight,
-		shadowColor: '#1A1A2E',
-		shadowOffset: { width: 0, height: 2 },
-		shadowOpacity: 0.06,
-		shadowRadius: 12,
-		elevation: 3,
 	},
 	quickStartCardGradient: {
 		flex: 1,

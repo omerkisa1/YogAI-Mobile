@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
 	Platform,
 	Pressable,
 	PressableProps,
+	StyleSheet,
 	StyleProp,
 	ViewStyle,
 } from 'react-native';
@@ -42,6 +43,7 @@ const Touchable = ({
 }: TouchableProps) => {
 	const scale = useSharedValue(1);
 	const opacity = useSharedValue(1);
+	const borderRadiusStyle = useMemo(() => ({ borderRadius }), [borderRadius]);
 
 	const animatedStyle = useAnimatedStyle(() => {
 		return {
@@ -77,7 +79,8 @@ const Touchable = ({
 					: undefined
 			}
 			style={[
-				{ borderRadius, overflow: 'hidden' },
+				styles.base,
+				borderRadiusStyle,
 				animatedStyle,
 				style,
 			]}
@@ -86,5 +89,11 @@ const Touchable = ({
 		</AnimatedPressable>
 	);
 };
+
+const styles = StyleSheet.create({
+	base: {
+		overflow: 'hidden',
+	},
+});
 
 export default Touchable;

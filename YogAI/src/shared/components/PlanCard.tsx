@@ -50,12 +50,13 @@ const PlanCard = ({
 	const analyzableCount = plan.analyzable_pose_count ?? 0;
 	const totalPoses = plan.total_pose_count ?? plan.exercises?.length ?? 0;
 	const safeProgress = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 0;
+	const cardAccentColorStyle = { borderLeftColor: difficulty.color };
 
 	return (
 		<Card
 			variant="default"
 			onPress={() => onPress(plan.id)}
-			style={[styles.card, { borderLeftWidth: 4, borderLeftColor: difficulty.color }]}
+			style={[styles.card, styles.cardAccent, cardAccentColorStyle]}
 			accessibilityLabel={`${plan.title_tr || plan.title_en} plan kartı`}
 		>
 			<Touchable
@@ -137,6 +138,9 @@ const PlanCard = ({
 const styles = StyleSheet.create({
 	card: {
 		gap: spacing.sm,
+	},
+	cardAccent: {
+		borderLeftWidth: 4,
 	},
 	headerRow: {
 		flexDirection: 'row',
