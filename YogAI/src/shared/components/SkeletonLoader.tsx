@@ -61,7 +61,7 @@ const SkeletonLoader = ({ width, height, borderRadius = radius.md }: SkeletonLoa
 
 const styles = StyleSheet.create({
 	shimmer: {
-		backgroundColor: '#FFFFFF',
+		backgroundColor: '#ffffff',
 	},
 });
 

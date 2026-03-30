@@ -18,7 +18,7 @@ const Chip = ({ label, selected, onPress, icon, tone = 'primary' }: ChipProps) =
 	const selectedLabelStyle = tone === 'warning' ? styles.warningSelectedLabel : styles.primarySelectedLabel;
 	const iconColor = selected
 		? tone === 'warning'
-			? colors.secondaryDark
+			? colors.warning
 			: colors.primaryDark
 		: colors.textSecondary;
 
@@ -31,7 +31,7 @@ const Chip = ({ label, selected, onPress, icon, tone = 'primary' }: ChipProps) =
 				pressed && styles.pressed,
 			]}
 			accessibilityRole="button"
-			accessibilityLabel={`${label} secim chip`}
+			accessibilityLabel={`${label} seçim chip`}
 		>
 			{icon ? (
 				<MaterialCommunityIcons
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
 		color: colors.primaryDark,
 	},
 	warningSelectedLabel: {
-		color: colors.secondaryDark,
+		color: colors.warning,
 	},
 	unselectedLabel: {
 		color: colors.textSecondary,

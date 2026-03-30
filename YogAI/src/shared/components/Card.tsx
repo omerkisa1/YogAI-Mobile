@@ -1,7 +1,7 @@
 import React, { ReactNode } from 'react';
 import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors } from '../../theme/colors';
-import { radius, shadows, spacing } from '../../theme/spacing';
+import { radius, spacing } from '../../theme/spacing';
 
 export type CardVariant = 'default' | 'elevated' | 'outlined';
 
@@ -13,22 +13,31 @@ interface CardProps {
 	accessibilityLabel?: string;
 }
 
+const cardShadow: ViewStyle = {
+	shadowColor: '#1A1A2E',
+	shadowOffset: { width: 0, height: 2 },
+	shadowOpacity: 0.06,
+	shadowRadius: 12,
+	elevation: 3,
+	borderWidth: 1,
+	borderColor: '#F0EFEB',
+};
+
 const variantStyles: Record<CardVariant, ViewStyle> = {
 	default: {
 		backgroundColor: colors.surface,
 		borderColor: colors.borderLight,
-		...shadows.sm,
+		...cardShadow,
 	},
 	elevated: {
 		backgroundColor: colors.surfaceElevated,
 		borderColor: colors.borderLight,
-		...shadows.md,
+		...cardShadow,
 	},
 	outlined: {
 		backgroundColor: colors.surface,
 		borderColor: colors.border,
-		shadowOpacity: 0,
-		elevation: 0,
+		...cardShadow,
 	},
 };
 

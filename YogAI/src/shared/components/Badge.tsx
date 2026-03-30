@@ -26,7 +26,7 @@ export interface BadgeProps {
 
 const variantMap: Record<BadgeVariant, { backgroundColor: string; textColor: string }> = {
 	primary: { backgroundColor: colors.primarySoft, textColor: colors.primaryDark },
-	secondary: { backgroundColor: '#F7EFE8', textColor: colors.secondaryDark },
+	secondary: { backgroundColor: '#F7EFE8', textColor: colors.secondary },
 	success: { backgroundColor: '#EAF8EE', textColor: colors.success },
 	warning: { backgroundColor: '#FFF5E6', textColor: colors.warning },
 	error: { backgroundColor: '#FFECEA', textColor: colors.error },

@@ -18,7 +18,7 @@ const EmptyState = ({ icon, title, description, actionLabel, onAction }: EmptySt
 	return (
 		<View style={styles.container}>
 			<View style={styles.iconContainer}>
-				<MaterialCommunityIcons name={icon} size={36} color={colors.primary} />
+				<MaterialCommunityIcons name={icon} size={32} color={colors.primary} />
 			</View>
 			<Text style={styles.title}>{title}</Text>
 			<Text style={styles.description}>{description}</Text>
@@ -26,8 +26,8 @@ const EmptyState = ({ icon, title, description, actionLabel, onAction }: EmptySt
 				<Button
 					title={actionLabel}
 					onPress={onAction}
-					variant="outline"
-					size="md"
+					variant="primary"
+					size="lg"
 					fullWidth={false}
 					accessibilityLabel={actionLabel}
 				/>
@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
 		borderColor: colors.borderLight,
 	},
 	iconContainer: {
-		width: 72,
-		height: 72,
+		width: 64,
+		height: 64,
 		borderRadius: radius.full,
 		backgroundColor: colors.primarySoft,
 		alignItems: 'center',

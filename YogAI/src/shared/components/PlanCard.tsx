@@ -5,7 +5,6 @@ import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 import { Plan } from '../types/plan';
-import Badge from './Badge';
 import Card from './Card';
 import ProgressBar from './ProgressBar';
 
@@ -19,21 +18,21 @@ export interface PlanCardProps {
 	progress?: number;
 }
 
-const difficultyMeta: Record<Plan['difficulty'], { label: string; variant: 'success' | 'warning' | 'error' }> = {
-	beginner: { label: 'Baslangic', variant: 'success' },
-	intermediate: { label: 'Orta', variant: 'warning' },
-	advanced: { label: 'Ileri', variant: 'error' },
+const difficultyMeta: Record<Plan['difficulty'], { label: string; color: string }> = {
+	beginner: { label: 'Başlangıç', color: colors.difficulty1 },
+	intermediate: { label: 'Orta', color: colors.difficulty2 },
+	advanced: { label: 'İleri', color: colors.difficulty4 },
 };
 
 const focusAreaLabelMap: Record<string, string> = {
-	full_body: 'Tam Vucut',
+	full_body: 'Tam Vücut',
 	legs: 'Bacaklar',
-	back: 'Sirt',
+	back: 'Sırt',
 	core: 'Core',
 	balance: 'Denge',
 	flexibility: 'Esneklik',
 	arms: 'Kollar',
-	hips: 'Kalca',
+	hips: 'Kalça',
 };
 
 const PlanCard = ({
@@ -49,12 +48,13 @@ const PlanCard = ({
 	const focusArea = focusAreaLabelMap[plan.focus_area] ?? plan.focus_area;
 	const analyzableCount = plan.analyzable_pose_count ?? 0;
 	const totalPoses = plan.total_pose_count ?? plan.exercises?.length ?? 0;
+	const safeProgress = Number.isFinite(progress) ? Math.max(0, Math.min(100, progress)) : 0;
 
 	return (
 		<Card
 			variant="default"
 			onPress={() => onPress(plan.id)}
-			style={styles.card}
+			style={[styles.card, { borderLeftWidth: 4, borderLeftColor: difficulty.color }]}
 			accessibilityLabel={`${plan.title_tr || plan.title_en} plan kartı`}
 		>
 			<Pressable
@@ -77,7 +77,7 @@ const PlanCard = ({
 						>
 							<MaterialCommunityIcons
 								name={plan.favorite ? 'star' : 'star-outline'}
-								size={20}
+								size={21}
 								color={plan.favorite ? colors.warning : colors.textMuted}
 							/>
 						</Pressable>
@@ -90,7 +90,7 @@ const PlanCard = ({
 						>
 							<MaterialCommunityIcons
 								name={plan.pin ? 'pin' : 'pin-outline'}
-								size={20}
+								size={21}
 								color={plan.pin ? colors.accent : colors.textMuted}
 							/>
 						</Pressable>
@@ -98,17 +98,32 @@ const PlanCard = ({
 				</View>
 
 				<View style={styles.badges}>
-					<Badge text={difficulty.label} variant={difficulty.variant} size="sm" />
-					<Badge text={focusArea} variant="primary" size="sm" />
+					<View style={styles.chip}>
+						<Text style={styles.chipText}>{difficulty.label}</Text>
+					</View>
+					<View style={styles.chip}>
+						<Text style={styles.chipText}>{focusArea}</Text>
+					</View>
 				</View>
 
-				<Text style={styles.metaText}>
-					{plan.total_duration_min} dk • {totalPoses} hareket • {analyzableCount} analiz edilebilir
-				</Text>
+				<View style={styles.metaRow}>
+					<View style={styles.metaItem}>
+						<MaterialCommunityIcons name="clock-outline" size={14} color={colors.textSecondary} />
+						<Text style={styles.metaText}>{plan.total_duration_min} dk</Text>
+					</View>
+					<View style={styles.metaItem}>
+						<MaterialCommunityIcons name="yoga" size={14} color={colors.textSecondary} />
+						<Text style={styles.metaText}>{totalPoses} hareket</Text>
+					</View>
+					<View style={styles.metaItem}>
+						<MaterialCommunityIcons name="camera-outline" size={14} color={colors.textSecondary} />
+						<Text style={styles.metaText}>{analyzableCount}</Text>
+					</View>
+				</View>
 
 				<View style={styles.progressWrap}>
-					<ProgressBar progress={progress} color={colors.primary} animated />
-					<Text style={styles.progressLabel}>{Math.max(0, Math.round(progress))}% tamamlandi</Text>
+					<ProgressBar progress={safeProgress} color={colors.primary} height={4} animated />
+					<Text style={styles.progressLabel}>%{Math.round(safeProgress)} tamamlandı</Text>
 				</View>
 			</Pressable>
 		</Card>
@@ -121,11 +136,11 @@ const styles = StyleSheet.create({
 	},
 	headerRow: {
 		flexDirection: 'row',
-		alignItems: 'center',
+		alignItems: 'flex-start',
 		justifyContent: 'space-between',
 	},
 	title: {
-		...typography.bodyMedium,
+		...typography.h4,
 		color: colors.text,
 		flex: 1,
 		marginRight: spacing.sm,
@@ -136,8 +151,8 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 	},
 	actionButton: {
-		width: 30,
-		height: 30,
+		width: 32,
+		height: 32,
 		alignItems: 'center',
 		justifyContent: 'center',
 		borderRadius: radius.full,
@@ -147,10 +162,32 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 		marginTop: spacing.xs,
 	},
-	metaText: {
-		...typography.bodySm,
-		color: colors.textSecondary,
+	chip: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		borderRadius: radius.full,
+		backgroundColor: colors.primarySoft,
+	},
+	chipText: {
+		...typography.captionMedium,
+		color: colors.primaryDark,
+	},
+	metaRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		flexWrap: 'wrap',
+		columnGap: spacing.sm,
+		rowGap: spacing.xs,
 		marginTop: spacing.xs,
+	},
+	metaItem: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.xs,
+	},
+	metaText: {
+		...typography.caption,
+		color: colors.textSecondary,
 	},
 	progressWrap: {
 		gap: spacing.xs,

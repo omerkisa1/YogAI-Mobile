@@ -1,5 +1,6 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
+	Dimensions,
 	FlatList,
 	Pressable,
 	RefreshControl,
@@ -13,13 +14,12 @@ import {
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import { useQueryClient } from '@tanstack/react-query';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import LinearGradient from 'react-native-linear-gradient';
 import Toast from 'react-native-toast-message';
 import { useUpdatePlan } from '../../features/plans/hooks/useCreatePlan';
 import { usePlans } from '../../features/plans/hooks/usePlans';
 import { useProfile } from '../../features/profile/hooks/useProfile';
 import { useTrainingStats } from '../../features/training/hooks/useTraining';
-import Button from '../../shared/components/Button';
-import Card from '../../shared/components/Card';
 import EmptyState from '../../shared/components/EmptyState';
 import ErrorView from '../../shared/components/ErrorView';
 import PlanCard from '../../shared/components/PlanCard';
@@ -35,6 +35,8 @@ interface StatCardData {
 	icon: string;
 	label: string;
 	value: string;
+	backgroundColor: string;
+	iconColor: string;
 }
 
 interface QuickStartPreset {
@@ -44,24 +46,34 @@ interface QuickStartPreset {
 	subtitle: string;
 	level: 'beginner' | 'intermediate' | 'advanced';
 	duration: number;
+	gradient: [string, string];
+	titleColor: string;
+	subtitleColor: string;
+	actionColor: string;
+	iconColor: string;
 }
 
 const dailyMessages = [
-	'Bugun harika bir gun yoga icin',
+	'Bugün harika bir gün yoga için',
 	'Nefesine odaklan, bedenini dinle',
-	'Her pratik seni guclendirir',
-	'Kucuk adimlar, buyuk degisimler',
-	'Bedenin sana tesekkur edecek',
+	'Her pratik seni güçlendirir',
+	'Küçük adımlar, büyük değişimler',
+	'Bedenin sana teşekkür edecek',
 ] as const;
 
 const quickStartPresets: QuickStartPreset[] = [
 	{
 		id: 'quick-beginner',
 		icon: 'leaf',
-		title: 'Baslangic',
-		subtitle: '15dk • Tam Vucut',
+		title: 'Başlangıç',
+		subtitle: '15dk • Tam Vücut',
 		level: 'beginner',
 		duration: 15,
+		gradient: [colors.primaryLight, colors.primaryDark],
+		titleColor: colors.textOnPrimary,
+		subtitleColor: colors.textOnPrimary,
+		actionColor: colors.textOnPrimary,
+		iconColor: colors.textOnPrimary,
 	},
 	{
 		id: 'quick-intermediate',
@@ -70,14 +82,24 @@ const quickStartPresets: QuickStartPreset[] = [
 		subtitle: '25dk • Denge',
 		level: 'intermediate',
 		duration: 25,
+		gradient: [colors.secondaryLight, colors.secondary],
+		titleColor: colors.text,
+		subtitleColor: colors.textSecondary,
+		actionColor: colors.text,
+		iconColor: colors.text,
 	},
 	{
 		id: 'quick-advanced',
 		icon: 'fire',
-		title: 'Ileri Seviye',
-		subtitle: '35dk • Guc Akisi',
+		title: 'İleri Seviye',
+		subtitle: '35dk • Güç',
 		level: 'advanced',
 		duration: 35,
+		gradient: [colors.difficulty4, colors.difficulty5],
+		titleColor: colors.textOnPrimary,
+		subtitleColor: colors.textOnPrimary,
+		actionColor: colors.textOnPrimary,
+		iconColor: colors.textOnPrimary,
 	},
 ];
 
@@ -102,6 +124,7 @@ const HomeScreen = () => {
 	const tabNavigation = useNavigation<NavigationProp<MainTabParamList>>();
 	const queryClient = useQueryClient();
 	const [refreshing, setRefreshing] = useState(false);
+	const quickStartCardWidth = useMemo(() => Math.max(170, Dimensions.get('window').width * 0.42), []);
 
 	const profileQuery = useProfile();
 	const plansQuery = usePlans();
@@ -121,10 +144,38 @@ const HomeScreen = () => {
 
 	const statCards = useMemo<StatCardData[]>(
 		() => [
-			{ id: 'total-sessions', icon: 'calendar', label: 'Antrenman', value: `${stats.total_sessions ?? 0}` },
-			{ id: 'total-hours', icon: 'timer-outline', label: 'Saat', value: formatHours(stats.total_duration_sec ?? 0) },
-			{ id: 'avg-score', icon: 'target', label: 'Ort.Skor', value: `%${Math.round(stats.average_accuracy ?? 0)}` },
-			{ id: 'streak', icon: 'fire', label: 'Seri', value: `${stats.current_streak ?? 0}` },
+			{
+				id: 'total-sessions',
+				icon: 'calendar-check-outline',
+				label: 'Antrenman',
+				value: `${stats.total_sessions ?? 0}`,
+				backgroundColor: colors.statGreen,
+				iconColor: colors.primaryDark,
+			},
+			{
+				id: 'total-hours',
+				icon: 'clock-outline',
+				label: 'Saat',
+				value: formatHours(stats.total_duration_sec ?? 0),
+				backgroundColor: colors.statBlue,
+				iconColor: colors.info,
+			},
+			{
+				id: 'avg-score',
+				icon: 'bullseye-arrow',
+				label: 'Ort. Skor',
+				value: `%${Math.round(stats.average_accuracy ?? 0)}`,
+				backgroundColor: colors.statOrange,
+				iconColor: colors.warning,
+			},
+			{
+				id: 'streak',
+				icon: 'fire',
+				label: 'Gün Serisi',
+				value: `${stats.current_streak ?? 0}`,
+				backgroundColor: colors.statPurple,
+				iconColor: colors.accent,
+			},
 		],
 		[stats],
 	);
@@ -184,39 +235,42 @@ const HomeScreen = () => {
 
 	const renderStatCard = useCallback(
 		({ item }: { item: StatCardData }) => (
-			<Card variant="elevated" style={styles.statCard}>
-				<MaterialCommunityIcons name={item.icon} size={22} color={colors.primary} />
+			<View style={[styles.statCard, { backgroundColor: item.backgroundColor }]}>
+				<MaterialCommunityIcons name={item.icon} size={20} color={item.iconColor} />
 				<Text style={styles.statValue}>{item.value}</Text>
 				<Text style={styles.statLabel}>{item.label}</Text>
-			</Card>
+			</View>
 		),
 		[],
 	);
 
 	const renderQuickStartCard = useCallback(
 		({ item }: { item: QuickStartPreset }) => (
-			<Card variant="default" style={styles.quickStartCard}>
-				<MaterialCommunityIcons name={item.icon} size={24} color={colors.primary} />
-				<Text style={styles.quickStartTitle}>{item.title}</Text>
-				<Text style={styles.quickStartSubtitle}>{item.subtitle}</Text>
-				<Button
-					title="Başlat"
-					onPress={() =>
-						navigation.navigate('CreatePlan', {
-							presetLevel: item.level,
-							presetDuration: item.duration,
-						})
-					}
-					variant="ghost"
-					size="sm"
-					icon="arrow-right"
-					iconPosition="right"
-					fullWidth={false}
-					accessibilityLabel={`${item.title} hizli antrenman Başlat`}
-				/>
-			</Card>
+			<Pressable
+				onPress={() =>
+					navigation.navigate('CreatePlan', {
+						presetLevel: item.level,
+						presetDuration: item.duration,
+					})
+				}
+				style={[styles.quickStartCard, { width: quickStartCardWidth }]}
+				accessibilityRole="button"
+				accessibilityLabel={`${item.title} hızlı antrenmanı başlat`}
+			>
+				<LinearGradient colors={item.gradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.quickStartCardGradient}>
+					<MaterialCommunityIcons name={item.icon} size={28} color={item.iconColor} />
+					<View style={styles.quickStartTextWrap}>
+						<Text style={[styles.quickStartTitle, { color: item.titleColor }]}>{item.title}</Text>
+						<Text style={[styles.quickStartSubtitle, { color: item.subtitleColor }]}>{item.subtitle}</Text>
+					</View>
+					<View style={styles.quickStartActionRow}>
+						<Text style={[styles.quickStartAction, { color: item.actionColor }]}>Başlat</Text>
+						<MaterialCommunityIcons name="arrow-right" size={16} color={item.actionColor} />
+					</View>
+				</LinearGradient>
+			</Pressable>
 		),
-		[navigation],
+		[navigation, quickStartCardWidth],
 	);
 
 	if (hasCriticalError) {
@@ -246,7 +300,7 @@ const HomeScreen = () => {
 				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
 				showsVerticalScrollIndicator={false}
 			>
-				<View style={styles.topBar}>
+				<LinearGradient colors={[colors.gradientWarm[0], colors.gradientWarm[1]]} style={styles.topBar}>
 					<View>
 						<Text style={styles.greeting}>Merhaba, {profileName}</Text>
 						<Text style={styles.dailyMessage}>{dailyMessage}</Text>
@@ -254,33 +308,20 @@ const HomeScreen = () => {
 					<View style={styles.avatar}>
 						<Text style={styles.avatarText}>{avatarInitial}</Text>
 					</View>
-				</View>
+				</LinearGradient>
 
 				{isInitialLoading ? (
-					<View style={styles.statsSkeletonRow}>
+					<View style={styles.statsGrid}>
 						{Array.from({ length: 4 }).map((_, index) => (
-							<SkeletonLoader key={`stat-skeleton-${index}`} width={148} height={122} borderRadius={radius.lg} />
+							<SkeletonLoader key={`stat-skeleton-${index}`} width="48%" height={120} borderRadius={radius.lg} />
 						))}
 					</View>
 				) : (
-					<FlatList
-						horizontal
-						data={statCards}
-						keyExtractor={item => item.id}
-						showsHorizontalScrollIndicator={false}
-						contentContainerStyle={styles.statListContent}
-						renderItem={renderStatCard}
-						maxToRenderPerBatch={10}
-						windowSize={5}
-						removeClippedSubviews
-						getItemLayout={(_, index) => ({ length: 156, offset: 156 * index, index })}
-						ListHeaderComponent={<View />}
-						ListFooterComponent={<View style={styles.listFooterSpacer} />}
-					/>
+					<View style={styles.statsGrid}>{statCards.map(item => renderStatCard({ item }))}</View>
 				)}
 
 				<View style={styles.sectionHeaderRow}>
-					<Text style={styles.sectionTitle}>Hizli Antrenman</Text>
+					<Text style={styles.sectionTitle}>Hızlı Başlat</Text>
 				</View>
 				<FlatList
 					horizontal
@@ -292,7 +333,7 @@ const HomeScreen = () => {
 					maxToRenderPerBatch={10}
 					windowSize={5}
 					removeClippedSubviews
-					getItemLayout={(_, index) => ({ length: 224, offset: 224 * index, index })}
+					getItemLayout={(_, index) => ({ length: quickStartCardWidth + spacing.sm, offset: (quickStartCardWidth + spacing.sm) * index, index })}
 					ListHeaderComponent={<View />}
 					ListFooterComponent={<View style={styles.listFooterSpacer} />}
 				/>
@@ -318,7 +359,7 @@ const HomeScreen = () => {
 					<EmptyState
 						icon="calendar-plus"
 						title="Henüz planınız yok"
-						description="İlk planınızı oluşturarak kişisel yoga yolculuğunuza başlayın."
+						description="AI ile ilk yoga planınızı oluşturmaya başlayın."
 						actionLabel="İlk Planı Oluştur"
 						onAction={() => navigation.navigate('CreatePlan')}
 					/>
@@ -364,8 +405,13 @@ const styles = StyleSheet.create({
 		flexDirection: 'row',
 		justifyContent: 'space-between',
 		alignItems: 'center',
+		paddingHorizontal: spacing.base,
+		paddingVertical: spacing.lg,
+		borderRadius: radius.xxl,
 		marginTop: spacing.sm,
-		marginBottom: spacing.base,
+		marginBottom: spacing.lg,
+		borderWidth: 1,
+		borderColor: colors.borderLight,
 	},
 	greeting: {
 		...typography.h3,
@@ -385,23 +431,29 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 	},
 	avatarText: {
-		...typography.bodyMedium,
+		...typography.bodySmMedium,
 		color: colors.textOnPrimary,
 	},
-	statsSkeletonRow: {
+	statsGrid: {
 		flexDirection: 'row',
-		gap: spacing.sm,
-		marginBottom: spacing.lg,
-	},
-	statListContent: {
-		paddingRight: spacing.base,
-		gap: spacing.sm,
+		flexWrap: 'wrap',
+		justifyContent: 'space-between',
+		rowGap: spacing.sm,
 		marginBottom: spacing.lg,
 	},
 	statCard: {
-		width: 148,
-		minHeight: 122,
+		width: '48%',
+		minHeight: 120,
+		padding: spacing.base,
+		borderRadius: radius.lg,
+		borderWidth: 1,
+		borderColor: colors.borderLight,
 		justifyContent: 'space-between',
+		shadowColor: '#1A1A2E',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.06,
+		shadowRadius: 12,
+		elevation: 3,
 	},
 	statValue: {
 		...typography.h2,
@@ -409,7 +461,7 @@ const styles = StyleSheet.create({
 		marginTop: spacing.sm,
 	},
 	statLabel: {
-		...typography.bodySm,
+		...typography.caption,
 		color: colors.textSecondary,
 	},
 	sectionHeaderRow: {
@@ -431,21 +483,41 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	quickStartCard: {
-		width: 216,
-		minHeight: 150,
+		minHeight: 184,
+		borderRadius: radius.xl,
+		overflow: 'hidden',
+		borderWidth: 1,
+		borderColor: colors.borderLight,
+		shadowColor: '#1A1A2E',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.06,
+		shadowRadius: 12,
+		elevation: 3,
+	},
+	quickStartCardGradient: {
+		flex: 1,
+		padding: spacing.base,
 		justifyContent: 'space-between',
+	},
+	quickStartTextWrap: {
+		gap: spacing.xs,
 	},
 	listFooterSpacer: {
 		width: spacing.xs,
 	},
 	quickStartTitle: {
-		...typography.bodyMedium,
-		color: colors.text,
-		marginTop: spacing.sm,
+		...typography.h4,
 	},
 	quickStartSubtitle: {
 		...typography.bodySm,
-		color: colors.textSecondary,
+	},
+	quickStartActionRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.xs,
+	},
+	quickStartAction: {
+		...typography.bodySmMedium,
 	},
 	planSkeletonColumn: {
 		gap: spacing.sm,
