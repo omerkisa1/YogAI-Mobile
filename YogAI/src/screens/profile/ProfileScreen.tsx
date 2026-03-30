@@ -2,7 +2,6 @@
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
 	Alert,
-	Platform,
 	Pressable,
 	SafeAreaView,
 	ScrollView,
@@ -11,15 +10,15 @@ import {
 	Text,
 	View,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import { useProfile } from '../../features/profile/hooks/useProfile';
-import Badge from '../../shared/components/Badge';
-import Button from '../../shared/components/Button';
 import Card from '../../shared/components/Card';
 import ErrorView from '../../shared/components/ErrorView';
 import LoadingView from '../../shared/components/LoadingView';
+import ProgressBar from '../../shared/components/ProgressBar';
 import { Goal } from '../../shared/types/profile';
 import { Injury, Level } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
@@ -28,47 +27,41 @@ import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
 
 const levelLabelMap: Record<Level, string> = {
-	beginner: 'Baslangic',
+	beginner: 'Başlangıç',
 	intermediate: 'Orta',
-	advanced: 'Ileri',
+	advanced: 'İleri',
 };
 
 const goalLabelMap: Record<Goal, string> = {
 	flexibility: 'Esneklik',
 	stress_relief: 'Stres Azaltma',
-	strength: 'Guc',
+	strength: 'Güç',
 	balance: 'Denge',
 	mobility: 'Mobilite',
-	posture: 'Postur',
+	posture: 'Postür',
 };
 
 const injuryLabelMap: Record<Injury, string> = {
 	knee_injury: 'Diz',
-	ankle_injury: 'Ayak Bilegi',
-	herniated_disc: 'Bel Fitigi',
+	ankle_injury: 'Ayak Bileği',
+	herniated_disc: 'Bel Fıtığı',
 	low_back_pain: 'Bel',
 	shoulder_injury: 'Omuz',
 	wrist_injury: 'Bilek',
 	neck_injury: 'Boyun',
-	groin_injury: 'Kasik',
-	hip_injury: 'Kalca',
-};
-
-const authProviderLabelMap: Record<string, string> = {
-	google: 'google',
-	email: 'email',
-	unknown: 'unknown',
+	groin_injury: 'Kasık',
+	hip_injury: 'Kalça',
 };
 
 const languageLabelMap: Record<'tr' | 'en', string> = {
-	tr: 'Turkce',
+	tr: 'Türkçe',
 	en: 'English',
 };
 
 const ProfileScreen = () => {
 	const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 	const profileQuery = useProfile();
-	const { signOut, isSubmitting, user, authProvider } = useAuth();
+	const { signOut, isSubmitting, user } = useAuth();
 
 	const displayName = profileQuery.data?.display_name || user?.displayName || 'YogAI Kullanıcı';
 	const email = user?.email || 'email bulunamadı';
@@ -133,111 +126,181 @@ const ProfileScreen = () => {
 	}
 
 	const profile = profileQuery.data;
-	const authProviderLabel = authProviderLabelMap[authProvider] ?? 'unknown';
-	const platformLabel = Platform.OS;
-	const levelLabel = levelLabelMap[profile.level] ?? profile.level;
-	const languageLabel = languageLabelMap[profile.preferred_language] ?? profile.preferred_language;
+	const levelLabel = profile.level ? levelLabelMap[profile.level] ?? profile.level : '-';
+	const ageLabel = profile.age ? `${profile.age}` : '-';
+	const languageLabel = profile.preferred_language
+		? languageLabelMap[profile.preferred_language] ?? profile.preferred_language
+		: '-';
+	const goalsLabel = goals.length > 0 ? goals.join(', ') : '-';
+	const injuriesLabel = injuries.length > 0 ? injuries.join(', ') : '-';
+
+	const completionTotal = 6;
+	const completedCount = [
+		Boolean(displayName && displayName.trim()),
+		Boolean(email && email !== 'email bulunamadı'),
+		levelLabel !== '-',
+		ageLabel !== '-',
+		languageLabel !== '-',
+		goalsLabel !== '-' || injuriesLabel !== '-',
+	].filter(Boolean).length;
+	const completionPercent = Math.round((completedCount / completionTotal) * 100);
+	const isCoreProfileEmpty = levelLabel === '-' && ageLabel === '-' && languageLabel === '-';
+
+	const menuItems = [
+		{
+			key: 'edit-profile',
+			label: 'Profili Düzenle',
+			icon: 'account-edit-outline',
+			backgroundColor: colors.primary,
+			onPress: () => navigation.navigate('EditProfile'),
+		},
+		{
+			key: 'notifications',
+			label: 'Bildirim Ayarları',
+			icon: 'bell-outline',
+			backgroundColor: colors.info,
+			onPress: () =>
+				Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Bildirim ayarları yakında.' }),
+		},
+		{
+			key: 'about',
+			label: 'Hakkında',
+			icon: 'information-outline',
+			backgroundColor: colors.textMuted,
+			onPress: () => Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Hakkında sayfası yakında.' }),
+		},
+		{
+			key: 'privacy',
+			label: 'Gizlilik Politikası',
+			icon: 'shield-check-outline',
+			backgroundColor: colors.textMuted,
+			onPress: () =>
+				Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Gizlilik politikası yakında.' }),
+		},
+	] as const;
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
 			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 			<ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 				<View style={styles.profileHeader}>
-					<View style={styles.avatar}>
+					<LinearGradient
+						colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
+						start={{ x: 0, y: 0 }}
+						end={{ x: 1, y: 1 }}
+						style={styles.avatar}
+					>
 						<Text style={styles.avatarText}>{avatarInitial}</Text>
-					</View>
-					<Text style={styles.name}>{displayName}</Text>
+					</LinearGradient>
+					<Text style={styles.name} numberOfLines={1}>
+						{displayName}
+					</Text>
 					<Text style={styles.email}>{email}</Text>
-					<View style={styles.badgeRow}>
-						<Badge text={`platform: ${platformLabel}`} variant="info" icon="cellphone" />
-						<Badge text={`auth: ${authProviderLabel}`} variant="secondary" icon="shield-account-outline" />
-					</View>
 				</View>
 
-				<Card variant="elevated" style={styles.infoCard}>
-					<View style={styles.infoLine}>
-						<Text style={styles.infoKey}>Seviye</Text>
-						<Badge text={levelLabel} variant="primary" />
-					</View>
-					<View style={styles.infoLine}>
-						<Text style={styles.infoKey}>Yaş</Text>
-						<Text style={styles.infoValue}>{profile.age || '-'}</Text>
-					</View>
-					<View style={styles.infoLine}>
-						<Text style={styles.infoKey}>Dil</Text>
-						<Text style={styles.infoValue}>{languageLabel}</Text>
-					</View>
-					<View style={styles.infoLineTop}>
-						<Text style={styles.infoKey}>Hedefler</Text>
-						<Text style={styles.infoValue}>{goals.length > 0 ? goals.join(', ') : '-'}</Text>
-					</View>
-					<View style={styles.infoLineTop}>
-						<Text style={styles.infoKey}>Sakatlıklar</Text>
-						<Text style={styles.infoValue}>{injuries.length > 0 ? injuries.join(', ') : '-'}</Text>
-					</View>
-				</Card>
+				{isCoreProfileEmpty ? (
+					<Card variant="elevated" style={styles.infoCard}>
+						<View style={styles.completionHeaderRow}>
+							<Text style={styles.completionTitle}>Profilinizi Tamamlayın</Text>
+							<View style={styles.completionBadge}>
+								<Text style={styles.completionBadgeText}>{completedCount}/{completionTotal}</Text>
+								<MaterialCommunityIcons name="check" size={12} color={colors.success} />
+							</View>
+						</View>
+						<ProgressBar progress={completionPercent} color={colors.primary} height={4} />
+
+						<View style={styles.infoLine}>
+							<Text style={styles.infoKey}>Seviye</Text>
+							<Text style={styles.infoValueMuted}>-</Text>
+						</View>
+						<View style={styles.infoLine}>
+							<Text style={styles.infoKey}>Yaş</Text>
+							<Text style={styles.infoValueMuted}>-</Text>
+						</View>
+						<View style={styles.infoLine}>
+							<Text style={styles.infoKey}>Dil</Text>
+							<Text style={styles.infoValueMuted}>-</Text>
+						</View>
+						<View style={styles.infoLineTop}>
+							<Text style={styles.infoKey}>Hedefler</Text>
+							<Text style={styles.infoValueMuted}>-</Text>
+						</View>
+						<View style={styles.infoLineTop}>
+							<Text style={styles.infoKey}>Sakatlıklar</Text>
+							<Text style={styles.infoValueMuted}>-</Text>
+						</View>
+
+						<Pressable
+							onPress={() => navigation.navigate('EditProfile')}
+							accessibilityRole="button"
+							accessibilityLabel="Profili düzenle"
+						>
+							<Text style={styles.editLink}>Profili Düzenle</Text>
+						</Pressable>
+					</Card>
+				) : (
+					<Card variant="elevated" style={styles.infoCard}>
+						<View style={styles.infoLine}>
+							<Text style={styles.infoKey}>Seviye</Text>
+							<View style={styles.levelChip}>
+								<Text style={styles.levelChipText}>{levelLabel}</Text>
+							</View>
+						</View>
+						<View style={styles.infoLine}>
+							<Text style={styles.infoKey}>Yaş</Text>
+							<Text style={styles.infoValue}>{ageLabel}</Text>
+						</View>
+						<View style={styles.infoLine}>
+							<Text style={styles.infoKey}>Dil</Text>
+							<Text style={styles.infoValue}>{languageLabel}</Text>
+						</View>
+						<View style={styles.infoLineTop}>
+							<Text style={styles.infoKey}>Hedefler</Text>
+							<Text style={styles.infoValue}>{goalsLabel}</Text>
+						</View>
+						<View style={styles.infoLineTop}>
+							<Text style={styles.infoKey}>Sakatlıklar</Text>
+							{injuriesLabel === '-' ? (
+								<Text style={styles.infoValueMuted}>-</Text>
+							) : (
+								<View style={styles.warningChip}>
+									<Text style={styles.warningChipText}>{injuriesLabel}</Text>
+								</View>
+							)}
+						</View>
+					</Card>
+				)}
 
 				<Card variant="default" style={styles.actionsCard}>
-					<Pressable
-						onPress={() => navigation.navigate('EditProfile')}
-						style={styles.actionItem}
-						accessibilityRole="button"
-						accessibilityLabel="Profili Düzenle"
-					>
-						<Text style={styles.actionText}>Profili Düzenle</Text>
-						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-					</Pressable>
-					<Pressable
-						onPress={() =>
-							Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Bildirim ayarları yakında.' })
-						}
-						style={styles.actionItem}
-						accessibilityRole="button"
-						accessibilityLabel="Bildirim ayarları"
-					>
-						<Text style={styles.actionText}>Bildirim ayarları</Text>
-						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-					</Pressable>
-					<Pressable
-						onPress={() =>
-							Toast.show({ type: 'info', position: 'top', text1: 'Yakında', text2: 'Hakkında sayfası yakında.' })
-						}
-						style={styles.actionItem}
-						accessibilityRole="button"
-						accessibilityLabel="Hakkında"
-					>
-						<Text style={styles.actionText}>Hakkında</Text>
-						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-					</Pressable>
-					<Pressable
-						onPress={() =>
-							Toast.show({
-								type: 'info',
-								position: 'top',
-								text1: 'Yakında',
-								text2: 'Gizlilik politikası yakında.',
-							})
-						}
-						style={styles.actionItem}
-						accessibilityRole="button"
-						accessibilityLabel="Gizlilik politikası"
-					>
-						<Text style={styles.actionText}>Gizlilik politikası</Text>
-						<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-					</Pressable>
+					{menuItems.map((item, index) => (
+						<Pressable
+							key={item.key}
+							onPress={item.onPress}
+							style={[styles.actionItem, index < menuItems.length - 1 ? styles.actionItemDivider : null]}
+							accessibilityRole="button"
+							accessibilityLabel={item.label}
+						>
+							<View style={styles.actionLeft}>
+								<View style={[styles.actionIconWrap, { backgroundColor: item.backgroundColor }]}>
+									<MaterialCommunityIcons name={item.icon} size={16} color={colors.textOnPrimary} />
+								</View>
+								<Text style={styles.actionText}>{item.label}</Text>
+							</View>
+							<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
+						</Pressable>
+					))}
 				</Card>
 
-				<Button
-					title="Çıkış Yap"
+				<Pressable
 					onPress={onSignOut}
-					variant="outline"
-					size="lg"
-					fullWidth
-					icon="logout"
 					disabled={isSubmitting}
-					loading={isSubmitting}
+					accessibilityRole="button"
 					accessibilityLabel="Çıkış yap"
-				/>
+				>
+					<Text style={[styles.logoutText, isSubmitting ? styles.logoutDisabled : null]}>
+						{isSubmitting ? 'Çıkış yapılıyor...' : 'Çıkış Yap'}
+					</Text>
+				</Pressable>
 
 				<Text style={styles.version}>YogAI v1.0.0</Text>
 			</ScrollView>
@@ -272,33 +335,49 @@ const styles = StyleSheet.create({
 		width: 80,
 		height: 80,
 		borderRadius: radius.full,
-		backgroundColor: colors.primary,
 		alignItems: 'center',
 		justifyContent: 'center',
 		marginBottom: spacing.sm,
+		shadowColor: '#1A1A2E',
+		shadowOffset: { width: 0, height: 2 },
+		shadowOpacity: 0.06,
+		shadowRadius: 12,
+		elevation: 3,
 	},
 	avatarText: {
-		...typography.h2,
+		...typography.h1,
 		color: colors.textOnPrimary,
 	},
 	name: {
-		...typography.h2,
+		...typography.h3,
 		color: colors.text,
+		maxWidth: '90%',
 	},
 	email: {
 		...typography.bodySm,
 		color: colors.textSecondary,
 		marginTop: spacing.xs,
 	},
-	badgeRow: {
-		flexDirection: 'row',
-		gap: spacing.xs,
-		marginTop: spacing.sm,
-		flexWrap: 'wrap',
-		justifyContent: 'center',
-	},
 	infoCard: {
 		gap: spacing.sm,
+	},
+	completionHeaderRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+	},
+	completionTitle: {
+		...typography.bodySmMedium,
+		color: colors.text,
+	},
+	completionBadge: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.xs,
+	},
+	completionBadgeText: {
+		...typography.captionMedium,
+		color: colors.textSecondary,
 	},
 	infoLine: {
 		flexDirection: 'row',
@@ -321,18 +400,75 @@ const styles = StyleSheet.create({
 		flex: 1.6,
 		textAlign: 'right',
 	},
+	infoValueMuted: {
+		...typography.bodySm,
+		color: colors.textMuted,
+		flex: 1.6,
+		textAlign: 'right',
+	},
+	levelChip: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		borderRadius: radius.full,
+		backgroundColor: colors.primarySoft,
+	},
+	levelChipText: {
+		...typography.captionMedium,
+		color: colors.primaryDark,
+	},
+	warningChip: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		borderRadius: radius.full,
+		backgroundColor: colors.secondarySoft,
+	},
+	warningChipText: {
+		...typography.captionMedium,
+		color: colors.warning,
+	},
+	editLink: {
+		...typography.bodySmMedium,
+		color: colors.primary,
+		marginTop: spacing.xs,
+	},
 	actionsCard: {
-		paddingVertical: spacing.sm,
+		paddingVertical: spacing.xs,
 	},
 	actionItem: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		paddingVertical: spacing.sm,
+		paddingHorizontal: spacing.xs,
+	},
+	actionItemDivider: {
+		borderBottomWidth: 1,
+		borderBottomColor: colors.borderLight,
+	},
+	actionLeft: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.sm,
+	},
+	actionIconWrap: {
+		width: 32,
+		height: 32,
+		borderRadius: radius.full,
+		alignItems: 'center',
+		justifyContent: 'center',
 	},
 	actionText: {
 		...typography.body,
 		color: colors.text,
+	},
+	logoutText: {
+		...typography.bodySm,
+		color: colors.error,
+		textAlign: 'center',
+		marginTop: spacing.sm,
+	},
+	logoutDisabled: {
+		opacity: 0.6,
 	},
 	version: {
 		...typography.caption,
