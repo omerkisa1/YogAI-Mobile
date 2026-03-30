@@ -50,7 +50,7 @@ const AuthenticatedNavigator = () => {
 			})}
 		>
 			<Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-			<Stack.Screen name="PlanDetail" component={PlanDetailScreen} options={{ title: 'Plan Detayı' }} />
+			<Stack.Screen name="PlanDetail" component={PlanDetailScreen} options={{ headerShown: false, title: 'Plan Detayı' }} />
 			<Stack.Screen name="CreatePlan" component={CreatePlanScreen} options={{ title: 'Plan Oluştur' }} />
 			<Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Profili Düzenle' }} />
 			<Stack.Screen name="TrainingSession" component={TrainingScreen} options={{ title: 'Antrenman' }} />

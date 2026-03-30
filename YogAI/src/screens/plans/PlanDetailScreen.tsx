@@ -1,4 +1,4 @@
-﻿import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useMemo, useRef, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
 	Animated,
@@ -11,19 +11,17 @@ import {
 	View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useDeletePlan, useUpdatePlan } from '../../features/plans/hooks/useCreatePlan';
 import { usePlan } from '../../features/plans/hooks/usePlan';
 import { useStartTrainingSession } from '../../features/training/hooks/useTraining';
-import Badge from '../../shared/components/Badge';
 import BottomSheet from '../../shared/components/BottomSheet';
 import Button from '../../shared/components/Button';
 import Card from '../../shared/components/Card';
-import DifficultyIndicator from '../../shared/components/DifficultyIndicator';
 import ErrorView from '../../shared/components/ErrorView';
 import LoadingView from '../../shared/components/LoadingView';
-import ProgressBar from '../../shared/components/ProgressBar';
 import { Exercise, Plan } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -41,20 +39,28 @@ const categoryColorMap: Record<string, string> = {
 };
 
 const levelLabelMap: Record<Plan['difficulty'], string> = {
-	beginner: 'Baslangic',
+	beginner: 'Başlangıç',
 	intermediate: 'Orta',
-	advanced: 'Ileri',
+	advanced: 'İleri',
 };
 
 const focusLabelMap: Record<string, string> = {
-	full_body: 'Tam Vucut',
+	full_body: 'Tam Vücut',
 	legs: 'Bacaklar',
-	back: 'Sirt',
+	back: 'Sırt',
 	core: 'Core',
 	balance: 'Denge',
 	flexibility: 'Esneklik',
 	arms: 'Kollar',
-	hips: 'Kalca',
+	hips: 'Kalça',
+};
+
+const categoryLabelMap: Record<string, string> = {
+	standing: 'Standing',
+	seated: 'Seated',
+	prone: 'Prone',
+	supine: 'Supine',
+	inversion: 'Inversion',
 };
 
 const difficultyToScale = (level: Plan['difficulty']) => {
@@ -75,65 +81,84 @@ const ExerciseItem = ({
 	expanded,
 	onToggle,
 	animatedValue,
-	difficultyScale,
+	difficultyBadge,
 }: {
 	exercise: Exercise;
 	index: number;
 	expanded: boolean;
 	onToggle: () => void;
 	animatedValue: Animated.Value;
-	difficultyScale: number;
+	difficultyBadge: string;
 }) => {
 	const animatedHeight = animatedValue.interpolate({
 		inputRange: [0, 1],
-		outputRange: [0, 140],
+		outputRange: [0, 180],
 	});
 	const animatedOpacity = animatedValue.interpolate({
 		inputRange: [0, 1],
 		outputRange: [0, 1],
 	});
 	const categoryColor = categoryColorMap[exercise.category] ?? colors.textMuted;
-	const categoryLabel = exercise.category || 'unknown';
+	const categoryLabel = categoryLabelMap[exercise.category] ?? (exercise.category || 'unknown');
 
 	return (
 		<Pressable
 			onPress={onToggle}
 			style={styles.exercisePressable}
 			accessibilityRole="button"
-			accessibilityLabel={`${exercise.name_tr || exercise.name_en} acilir kart`}
+			accessibilityLabel={`${exercise.name_tr || exercise.name_en} açılır kart`}
 		>
-			<Card variant="default" style={styles.exerciseCard}>
-				<Text style={styles.exerciseTitle}>
-					{index + 1}. {exercise.name_tr || exercise.name_en}
-				</Text>
-				<View style={styles.exerciseMetaRow}>
-					<Badge text={categoryLabel} backgroundColor={`${categoryColor}22`} textColor={categoryColor} />
-					<DifficultyIndicator difficulty={difficultyScale} size="sm" />
+			<Card
+				variant="default"
+				style={[styles.exerciseCard, { borderLeftWidth: 4, borderLeftColor: categoryColor }]}
+			>
+				<View style={styles.exerciseHeaderRow}>
+					<View style={styles.exerciseNumberBadge}>
+						<Text style={styles.exerciseNumber}>{index + 1}</Text>
+					</View>
+					<View style={styles.exerciseNameWrap}>
+						<Text style={styles.exerciseTitle}>{exercise.name_tr || exercise.name_en}</Text>
+						<Text style={styles.exerciseSubtitle}>{exercise.name_en}</Text>
+					</View>
 				</View>
-				<Text style={styles.exerciseDuration}>{exercise.duration_min} dakika</Text>
+
+				<View style={styles.exerciseChipRow}>
+					<View style={[styles.exerciseChip, { backgroundColor: `${categoryColor}22` }]}>
+						<Text style={[styles.exerciseChipText, { color: categoryColor }]}>{categoryLabel}</Text>
+					</View>
+					<View style={styles.exerciseChipNeutral}>
+						<Text style={styles.exerciseChipNeutralText}>{difficultyBadge}</Text>
+					</View>
+				</View>
+
+				<View style={styles.exerciseMetaLine}>
+					<MaterialCommunityIcons name="clock-outline" size={14} color={colors.textSecondary} />
+					<Text style={styles.exerciseMetaText}>{exercise.duration_min}dk</Text>
+				</View>
+
 				<View style={styles.analyzableRow}>
 					<MaterialCommunityIcons
 						name={exercise.is_analyzable ? 'camera-outline' : 'camera-off-outline'}
-						size={18}
-						color={exercise.is_analyzable ? colors.primary : colors.textMuted}
+						size={16}
+						color={exercise.is_analyzable ? colors.success : colors.textMuted}
 					/>
 					<Text style={[styles.analyzableText, exercise.is_analyzable && styles.analyzableTextActive]}>
 						{exercise.is_analyzable ? 'Analiz edilebilir' : 'Analiz edilemez'}
 					</Text>
 				</View>
 
-				<Animated.View style={[styles.exerciseDescriptionWrap, { maxHeight: animatedHeight, opacity: animatedOpacity }]}>
-					<Text style={styles.exerciseDescription}>{exercise.instructions_tr || exercise.instructions_en}</Text>
-				</Animated.View>
-
 				<View style={styles.expandHintRow}>
-					<Text style={styles.expandHintText}>{expanded ? 'Ayrintiyi daralt' : 'Ayrintiyi genislet'}</Text>
+					<Text style={styles.expandHintText}>{expanded ? 'Açıklamayı gizle' : 'Açıklamayı göster'}</Text>
 					<MaterialCommunityIcons
 						name={expanded ? 'chevron-up' : 'chevron-down'}
 						size={18}
 						color={colors.textMuted}
 					/>
 				</View>
+
+				<Animated.View style={[styles.exerciseDescriptionWrap, { maxHeight: animatedHeight, opacity: animatedOpacity }]}> 
+					<Text style={styles.exerciseDescription}>{exercise.instructions_tr || exercise.instructions_en}</Text>
+				</Animated.View>
 			</Card>
 		</Pressable>
 	);
@@ -172,54 +197,39 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 		}).start();
 	};
 
-	useLayoutEffect(() => {
+	const onToggleFavorite = async () => {
 		if (!plan) {
 			return;
 		}
 
-		navigation.setOptions({
-			headerRight: () => (
-				<View style={styles.headerActions}>
-					<Pressable
-						onPress={() => {
-							updatePlanMutation.mutate({ id: planId, data: { favorite: !plan.favorite } });
-						}}
-						style={styles.headerActionButton}
-						accessibilityRole="button"
-							accessibilityLabel="Favori değiştir"
-					>
-						<MaterialCommunityIcons
-							name={plan.favorite ? 'star' : 'star-outline'}
-							size={22}
-							color={plan.favorite ? colors.warning : colors.primary}
-						/>
-					</Pressable>
-					<Pressable
-						onPress={() => {
-							updatePlanMutation.mutate({ id: planId, data: { pin: !plan.pin } });
-						}}
-						style={styles.headerActionButton}
-						accessibilityRole="button"
-							accessibilityLabel="Sabitleme değiştir"
-					>
-						<MaterialCommunityIcons
-							name={plan.pin ? 'pin' : 'pin-outline'}
-							size={22}
-							color={plan.pin ? colors.accent : colors.primary}
-						/>
-					</Pressable>
-					<Pressable
-						onPress={() => setDeleteSheetVisible(true)}
-						style={styles.headerActionButton}
-						accessibilityRole="button"
-						accessibilityLabel="Plan menu"
-					>
-						<MaterialCommunityIcons name="dots-vertical" size={22} color={colors.primary} />
-					</Pressable>
-				</View>
-			),
-		});
-	}, [navigation, plan, planId, updatePlanMutation]);
+		try {
+			await updatePlanMutation.mutateAsync({ id: planId, data: { favorite: !plan.favorite } });
+		} catch {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İşlem Başarısız',
+				text2: 'Favori durumu güncellenemedi.',
+			});
+		}
+	};
+
+	const onTogglePin = async () => {
+		if (!plan) {
+			return;
+		}
+
+		try {
+			await updatePlanMutation.mutateAsync({ id: planId, data: { pin: !plan.pin } });
+		} catch {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İşlem Başarısız',
+				text2: 'Sabitleme durumu güncellenemedi.',
+			});
+		}
+	};
 
 	const onDeletePlan = async () => {
 		try {
@@ -295,36 +305,100 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 
 	const difficultyScale = difficultyToScale(plan.difficulty);
 	const analyzableCount = plan.analyzable_pose_count ?? 0;
-	const totalPoses = plan.total_pose_count || plan.exercises.length || 1;
-	const analyzableProgress = (analyzableCount / totalPoses) * 100;
+	const totalPoses = plan.total_pose_count || plan.exercises.length || 0;
 	const levelLabel = levelLabelMap[plan.difficulty];
 	const focusLabel = focusLabelMap[plan.focus_area] ?? plan.focus_area;
+	const difficultyBadge = `D${difficultyScale}`;
 
 	return (
 		<SafeAreaView style={styles.safeArea}>
-			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
 			<ScrollView
 				style={styles.container}
-				contentContainerStyle={[styles.content, { paddingBottom: 110 + insets.bottom }]}
+				contentContainerStyle={[styles.content, { paddingBottom: 120 + insets.bottom }]}
 				showsVerticalScrollIndicator={false}
 			>
-				<Text style={styles.title}>{plan.title_tr || plan.title_en}</Text>
-				<View style={styles.topBadges}>
-					<Badge text={levelLabel} variant="primary" />
-					<Badge text={focusLabel} variant="secondary" />
-					<Badge text={`${plan.total_duration_min} dk`} variant="info" />
-				</View>
-				<Text style={styles.description}>{plan.description_tr || plan.description_en}</Text>
+				<LinearGradient
+					colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
+					start={{ x: 0, y: 0 }}
+					end={{ x: 1, y: 1 }}
+					style={[styles.hero, { paddingTop: insets.top + spacing.base }]}
+				>
+					<View style={styles.heroTopRow}>
+						<Pressable
+							onPress={navigation.goBack}
+							style={styles.heroBackButton}
+							accessibilityRole="button"
+							accessibilityLabel="Geri"
+						>
+							<MaterialCommunityIcons name="chevron-left" size={24} color={colors.textOnPrimary} />
+							<Text style={styles.heroBackText}>Geri</Text>
+						</Pressable>
 
-				<Card variant="elevated" style={styles.analysisCard}>
-					<View style={styles.analysisHeader}>
-						<MaterialCommunityIcons name="camera" size={22} color={colors.primary} />
-						<Text style={styles.analysisTitle}>
-							{analyzableCount} / {totalPoses} hareket kamera ile analiz edilebilir
-						</Text>
+						<View style={styles.heroActions}>
+							<Pressable
+								onPress={() => {
+									void onToggleFavorite();
+								}}
+								style={styles.heroActionButton}
+								accessibilityRole="button"
+								accessibilityLabel="Favori"
+							>
+								<MaterialCommunityIcons
+									name={plan.favorite ? 'star' : 'star-outline'}
+									size={20}
+									color={colors.textOnPrimary}
+								/>
+							</Pressable>
+							<Pressable
+								onPress={() => {
+									void onTogglePin();
+								}}
+								style={styles.heroActionButton}
+								accessibilityRole="button"
+								accessibilityLabel="Sabitle"
+							>
+								<MaterialCommunityIcons
+									name={plan.pin ? 'pin' : 'pin-outline'}
+									size={20}
+									color={colors.textOnPrimary}
+								/>
+							</Pressable>
+							<Pressable
+								onPress={() => setDeleteSheetVisible(true)}
+								style={styles.heroActionButton}
+								accessibilityRole="button"
+								accessibilityLabel="Plan menü"
+							>
+								<MaterialCommunityIcons name="dots-vertical" size={20} color={colors.textOnPrimary} />
+							</Pressable>
+						</View>
 					</View>
-					<ProgressBar progress={analyzableProgress} color={colors.primary} />
-				</Card>
+
+					<Text style={styles.heroTitle}>{plan.title_tr || plan.title_en}</Text>
+
+					<View style={styles.heroChipRow}>
+						<View style={styles.heroChip}>
+							<Text style={styles.heroChipText}>{levelLabel}</Text>
+						</View>
+						<View style={styles.heroChip}>
+							<Text style={styles.heroChipText}>{focusLabel}</Text>
+						</View>
+					</View>
+
+					<View style={styles.heroMetaRow}>
+						<MaterialCommunityIcons name="clock-outline" size={15} color={colors.textOnPrimary} />
+						<Text style={styles.heroMetaText}>{plan.total_duration_min}dk</Text>
+						<Text style={styles.heroMetaDot}>•</Text>
+						<MaterialCommunityIcons name="yoga" size={15} color={colors.textOnPrimary} />
+						<Text style={styles.heroMetaText}>{totalPoses} hareket</Text>
+					</View>
+
+					<View style={styles.heroMetaRow}>
+						<MaterialCommunityIcons name="camera-outline" size={15} color={colors.textOnPrimary} />
+						<Text style={styles.heroMetaText}>{analyzableCount}/{totalPoses} analiz edilebilir</Text>
+					</View>
+				</LinearGradient>
 
 				<Text style={styles.sectionTitle}>Egzersiz Listesi</Text>
 				<View style={styles.exerciseList}>
@@ -341,7 +415,7 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 								expanded={expanded}
 								onToggle={() => toggleExpanded(key)}
 								animatedValue={animatedValue}
-								difficultyScale={difficultyScale}
+								difficultyBadge={difficultyBadge}
 							/>
 						);
 					})}
@@ -405,81 +479,158 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.background,
 	},
 	content: {
-		paddingHorizontal: spacing.base,
-		paddingTop: spacing.sm,
+		paddingBottom: spacing.base,
 	},
 	errorWrap: {
 		flex: 1,
 		justifyContent: 'center',
 		paddingHorizontal: spacing.base,
 	},
-	headerActions: {
+	hero: {
+		paddingHorizontal: spacing.base,
+		paddingBottom: spacing.lg,
+		borderBottomLeftRadius: radius.xxl,
+		borderBottomRightRadius: radius.xxl,
+	},
+	heroTopRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		marginBottom: spacing.base,
+	},
+	heroBackButton: {
+		flexDirection: 'row',
+		alignItems: 'center',
+	},
+	heroBackText: {
+		...typography.bodySmMedium,
+		color: colors.textOnPrimary,
+	},
+	heroActions: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: spacing.xs,
 	},
-	headerActionButton: {
-		width: 30,
-		height: 30,
+	heroActionButton: {
+		width: 32,
+		height: 32,
 		alignItems: 'center',
 		justifyContent: 'center',
+		borderRadius: radius.full,
+		backgroundColor: 'rgba(255,255,255,0.14)',
 	},
-	title: {
-		...typography.h2,
-		color: colors.text,
+	heroTitle: {
+		...typography.h1,
+		color: colors.textOnPrimary,
+		marginBottom: spacing.base,
 	},
-	topBadges: {
+	heroChipRow: {
 		flexDirection: 'row',
-		flexWrap: 'wrap',
 		gap: spacing.xs,
-		marginTop: spacing.sm,
 		marginBottom: spacing.sm,
 	},
-	description: {
-		...typography.body,
-		color: colors.textSecondary,
+	heroChip: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		borderRadius: radius.full,
+		backgroundColor: 'rgba(255,255,255,0.2)',
 	},
-	analysisCard: {
-		marginTop: spacing.base,
-		gap: spacing.sm,
+	heroChipText: {
+		...typography.captionMedium,
+		color: colors.textOnPrimary,
 	},
-	analysisHeader: {
+	heroMetaRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		gap: spacing.sm,
+		marginTop: spacing.xs,
+		gap: spacing.xs,
 	},
-	analysisTitle: {
-		...typography.bodySmMedium,
-		color: colors.text,
-		flex: 1,
+	heroMetaText: {
+		...typography.bodySm,
+		color: 'rgba(255,255,255,0.84)',
+	},
+	heroMetaDot: {
+		...typography.bodySm,
+		color: 'rgba(255,255,255,0.84)',
 	},
 	sectionTitle: {
 		...typography.h4,
 		color: colors.text,
 		marginTop: spacing.lg,
+		marginHorizontal: spacing.base,
 		marginBottom: spacing.sm,
 	},
 	exerciseList: {
+		paddingHorizontal: spacing.base,
 		gap: spacing.sm,
 	},
 	exercisePressable: {
 		borderRadius: radius.lg,
 	},
 	exerciseCard: {
-		gap: spacing.xs,
+		gap: spacing.sm,
+		paddingLeft: spacing.sm,
+	},
+	exerciseHeaderRow: {
+		flexDirection: 'row',
+		alignItems: 'flex-start',
+		gap: spacing.sm,
+	},
+	exerciseNumberBadge: {
+		width: 28,
+		height: 28,
+		borderRadius: radius.full,
+		backgroundColor: colors.primary,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	exerciseNumber: {
+		...typography.captionMedium,
+		color: colors.textOnPrimary,
+	},
+	exerciseNameWrap: {
+		flex: 1,
 	},
 	exerciseTitle: {
-		...typography.bodyMedium,
+		...typography.h4,
 		color: colors.text,
 	},
-	exerciseMetaRow: {
+	exerciseSubtitle: {
+		...typography.caption,
+		color: colors.textMuted,
+		fontStyle: 'italic',
+		marginTop: spacing.xxs,
+	},
+	exerciseChipRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		justifyContent: 'space-between',
-		marginTop: spacing.xs,
+		gap: spacing.xs,
 	},
-	exerciseDuration: {
-		...typography.bodySm,
+	exerciseChip: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		borderRadius: radius.full,
+	},
+	exerciseChipText: {
+		...typography.caption,
+	},
+	exerciseChipNeutral: {
+		paddingHorizontal: spacing.sm,
+		paddingVertical: spacing.xs,
+		borderRadius: radius.full,
+		backgroundColor: colors.surfaceElevated,
+	},
+	exerciseChipNeutralText: {
+		...typography.caption,
+		color: colors.textSecondary,
+	},
+	exerciseMetaLine: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: spacing.xs,
+	},
+	exerciseMetaText: {
+		...typography.caption,
 		color: colors.textSecondary,
 	},
 	analyzableRow: {
@@ -492,18 +643,19 @@ const styles = StyleSheet.create({
 		color: colors.textMuted,
 	},
 	analyzableTextActive: {
-		color: colors.primary,
+		color: colors.success,
 	},
 	exerciseDescriptionWrap: {
 		overflow: 'hidden',
+		borderTopWidth: 1,
+		borderTopColor: colors.borderLight,
 	},
 	exerciseDescription: {
 		...typography.bodySm,
 		color: colors.textSecondary,
-		paddingTop: spacing.xs,
+		paddingTop: spacing.sm,
 	},
 	expandHintRow: {
-		marginTop: spacing.xs,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
@@ -517,7 +669,7 @@ const styles = StyleSheet.create({
 		left: 0,
 		right: 0,
 		bottom: 0,
-		paddingTop: spacing.sm,
+		paddingTop: spacing.base,
 		paddingHorizontal: spacing.base,
 		backgroundColor: colors.surface,
 		borderTopWidth: 1,
