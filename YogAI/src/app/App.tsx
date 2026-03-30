@@ -118,7 +118,7 @@ const App = () => {
 				<NavigationContainer linking={linking}>
 					<RootNavigator />
 				</NavigationContainer>
-				<Toast config={toastConfig} position="top" visibilityTime={3000} topOffset={56} autoHide />
+				<Toast config={toastConfig} position="top" visibilityTime={3000} topOffset={56} autoHide swipeable />
 			</QueryClientProvider>
 		</SafeAreaProvider>
 	);

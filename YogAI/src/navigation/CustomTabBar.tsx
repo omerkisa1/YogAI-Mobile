@@ -87,12 +87,14 @@ const styles = StyleSheet.create({
 		paddingTop: spacing.xs,
 	},
 	row: {
+		minHeight: 60,
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 	},
 	tabItem: {
 		flex: 1,
+		height: 60,
 		alignItems: 'center',
 		justifyContent: 'center',
 		paddingTop: spacing.xs,
