@@ -2,6 +2,7 @@
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
+	ActivityIndicator,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
@@ -12,12 +13,12 @@ import {
 	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { useAuth } from '../../features/auth/hooks/useAuth';
-import Button from '../../shared/components/Button';
-import ErrorView from '../../shared/components/ErrorView';
 import Input from '../../shared/components/Input';
+import { useNetworkStatus } from '../../shared/hooks/useNetworkStatus';
 import { AuthStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
@@ -45,19 +46,19 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 		case 'auth/email-already-in-use':
 			return {
 				text1: 'Kayıt Başarısız',
-				text2: 'Bu email zaten kullanimda.',
+					text2: 'Bu email zaten kullanımda.',
 				type: 'generic',
 			};
 		case 'auth/weak-password':
 			return {
-				text1: 'Zayif Şifre',
+					text1: 'Zayıf Şifre',
 				text2: 'Şifre en az 6 karakter olmalı.',
 				type: 'generic',
 			};
 		case 'auth/invalid-email':
 			return {
 				text1: 'Geçersiz email',
-				text2: 'Lütfen Geçerli bir email adresi girin.',
+					text2: 'Lütfen geçerli bir email adresi girin.',
 				type: 'generic',
 			};
 		case 'auth/network-request-failed':
@@ -69,7 +70,7 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 		default:
 			return {
 				text1: 'Kayıt Başarısız',
-				text2: 'Beklenmeyen bir hata Oluştu. Lütfen tekrar deneyin.',
+					text2: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
 				type: 'generic',
 			};
 	}
@@ -77,9 +78,9 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 
 const RegisterScreen = ({ navigation }: Props) => {
 	const { registerWithEmail, signInWithGoogle, isSubmitting } = useAuth();
+	const { isOffline } = useNetworkStatus();
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false);
-	const [hasNetworkError, setHasNetworkError] = useState(false);
 
 	const {
 		control,
@@ -100,7 +101,16 @@ const RegisterScreen = ({ navigation }: Props) => {
 	const loading = isSubmitting || isFormSubmitting;
 
 	const onSubmit = handleSubmit(async values => {
-		setHasNetworkError(false);
+		if (isOffline) {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İnternet bağlantısı yok',
+				text2: 'Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+			});
+			return;
+		}
+
 		try {
 			await registerWithEmail(values.email.trim(), values.password, values.displayName.trim());
 			Toast.show({
@@ -111,10 +121,6 @@ const RegisterScreen = ({ navigation }: Props) => {
 			});
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
-			if (mappedError.type === 'network') {
-				setHasNetworkError(true);
-			}
-
 			Toast.show({
 				type: 'error',
 				position: 'top',
@@ -125,15 +131,20 @@ const RegisterScreen = ({ navigation }: Props) => {
 	});
 
 	const onGoogleRegister = async () => {
-		setHasNetworkError(false);
+		if (isOffline) {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İnternet bağlantısı yok',
+				text2: 'Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+			});
+			return;
+		}
+
 		try {
 			await signInWithGoogle();
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
-			if (mappedError.type === 'network') {
-				setHasNetworkError(true);
-			}
-
 			Toast.show({
 				type: 'error',
 				position: 'top',
@@ -155,20 +166,20 @@ const RegisterScreen = ({ navigation }: Props) => {
 					keyboardShouldPersistTaps="handled"
 					showsVerticalScrollIndicator={false}
 				>
-					{hasNetworkError ? (
-						<View style={styles.errorBox}>
-							<ErrorView
-								type="network"
-								onRetry={() => {
-									setHasNetworkError(false);
-									void onSubmit();
-								}}
-							/>
-						</View>
-					) : null}
+					<View style={styles.headerRow}>
+						<Pressable
+							onPress={() => navigation.goBack()}
+							style={styles.backButton}
+							accessibilityRole="button"
+							accessibilityLabel="Geri"
+						>
+							<MaterialCommunityIcons name="chevron-left" size={24} color={colors.primary} />
+							<Text style={styles.backText}>Geri</Text>
+						</Pressable>
+						<Text style={styles.headerTitle}>Hesap Oluştur</Text>
+					</View>
 
 					<View style={styles.formSection}>
-						<Text style={styles.title}>Hesap Oluştur</Text>
 						<Text style={styles.subtitle}>Yeni hesabınızla YogAI dünyasına katılın</Text>
 
 						<Controller
@@ -209,7 +220,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 							render={({ field: { value, onChange } }) => (
 								<Input
 									label="Email"
-									placeholder="ornek@email.com"
+									placeholder="Email adresiniz"
 									value={value}
 									onChangeText={onChange}
 									error={errors.email?.message}
@@ -271,16 +282,19 @@ const RegisterScreen = ({ navigation }: Props) => {
 							)}
 						/>
 
-						<Button
-							title="Kayıt Ol"
+						<Pressable
 							onPress={onSubmit}
-							variant="primary"
-							size="lg"
-							loading={loading}
 							disabled={loading}
-							fullWidth
+							style={({ pressed }) => [styles.primaryButton, pressed && styles.primaryButtonPressed, loading && styles.primaryButtonDisabled]}
+							accessibilityRole="button"
 							accessibilityLabel="Kayıt ol"
-						/>
+						>
+							{loading ? (
+								<ActivityIndicator size="small" color={colors.textOnPrimary} />
+							) : (
+								<Text style={styles.primaryButtonText}>Kayıt Ol</Text>
+							)}
+						</Pressable>
 
 						<View style={styles.separatorRow}>
 							<View style={styles.separatorLine} />
@@ -288,17 +302,24 @@ const RegisterScreen = ({ navigation }: Props) => {
 							<View style={styles.separatorLine} />
 						</View>
 
-						<Button
-							title="Google ile Kayıt Ol"
+						<Pressable
 							onPress={onGoogleRegister}
-							variant="outline"
-							size="lg"
-							icon="google"
-							loading={loading}
 							disabled={loading}
-							fullWidth
-							accessibilityLabel="Google ile Kayıt ol"
-						/>
+							style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed, loading && styles.googleButtonDisabled]}
+							accessibilityRole="button"
+							accessibilityLabel="Google ile kayıt ol"
+						>
+							{loading ? (
+								<ActivityIndicator size="small" color={colors.textSecondary} />
+							) : (
+								<>
+									<View style={styles.googleIconWrap}>
+										<Text style={styles.googleIconText}>G</Text>
+									</View>
+									<Text style={styles.googleButtonText}>Google ile Kayıt Ol</Text>
+								</>
+							)}
+						</Pressable>
 
 						<View style={styles.loginRow}>
 							<Text style={styles.loginHint}>Zaten hesabın var mı?</Text>
@@ -327,28 +348,56 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	scrollContent: {
-		paddingHorizontal: spacing.base,
+		paddingHorizontal: spacing.xl,
+		paddingTop: spacing.base,
 		paddingBottom: spacing.huge,
 	},
-	formSection: {
-		backgroundColor: colors.surface,
-		borderRadius: radius.xl,
-		paddingHorizontal: spacing.base,
-		paddingTop: spacing.lg,
-		paddingBottom: spacing.xl,
-		marginTop: spacing.sm,
-		borderWidth: 1,
-		borderColor: colors.borderLight,
+	headerRow: {
+		marginTop: spacing.xs,
+		marginBottom: spacing.base,
 	},
-	title: {
-		...typography.h2,
+	backButton: {
+		alignSelf: 'flex-start',
+		flexDirection: 'row',
+		alignItems: 'center',
+		paddingVertical: spacing.xs,
+	},
+	backText: {
+		...typography.bodySmMedium,
+		color: colors.primary,
+	},
+	headerTitle: {
+		...typography.h3,
 		color: colors.text,
-		marginBottom: spacing.xs,
+		marginTop: spacing.xs,
+	},
+	formSection: {
+		paddingTop: spacing.xs,
+		paddingBottom: spacing.xl,
 	},
 	subtitle: {
 		...typography.bodySm,
 		color: colors.textSecondary,
 		marginBottom: spacing.base,
+	},
+	primaryButton: {
+		minHeight: 52,
+		borderRadius: radius.lg,
+		backgroundColor: colors.primary,
+		borderWidth: 1,
+		borderColor: colors.primary,
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	primaryButtonPressed: {
+		opacity: 0.92,
+	},
+	primaryButtonDisabled: {
+		opacity: 0.65,
+	},
+	primaryButtonText: {
+		...typography.buttonLg,
+		color: colors.textOnPrimary,
 	},
 	separatorRow: {
 		flexDirection: 'row',
@@ -364,6 +413,41 @@ const styles = StyleSheet.create({
 	separatorText: {
 		...typography.caption,
 		color: colors.textMuted,
+	},
+	googleButton: {
+		minHeight: 52,
+		borderRadius: radius.lg,
+		borderWidth: 1,
+		borderColor: colors.border,
+		backgroundColor: colors.surface,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	googleButtonPressed: {
+		opacity: 0.9,
+	},
+	googleButtonDisabled: {
+		opacity: 0.6,
+	},
+	googleIconWrap: {
+		width: 22,
+		height: 22,
+		borderRadius: radius.full,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#FFFFFF',
+		borderWidth: 1,
+		borderColor: colors.borderLight,
+		marginRight: spacing.sm,
+	},
+	googleIconText: {
+		...typography.bodySmMedium,
+		color: '#4285F4',
+	},
+	googleButtonText: {
+		...typography.buttonLg,
+		color: colors.text,
 	},
 	loginRow: {
 		flexDirection: 'row',
@@ -381,10 +465,6 @@ const styles = StyleSheet.create({
 	loginAction: {
 		...typography.bodySmMedium,
 		color: colors.primary,
-	},
-	errorBox: {
-		marginTop: spacing.sm,
-		marginBottom: spacing.base,
 	},
 });
 

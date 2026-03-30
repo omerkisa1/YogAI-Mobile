@@ -2,6 +2,7 @@
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
+	ActivityIndicator,
 	KeyboardAvoidingView,
 	Platform,
 	Pressable,
@@ -12,14 +13,15 @@ import {
 	View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import BottomSheet from '../../shared/components/BottomSheet';
 import Button from '../../shared/components/Button';
-import ErrorView from '../../shared/components/ErrorView';
 import Input from '../../shared/components/Input';
+import { useNetworkStatus } from '../../shared/hooks/useNetworkStatus';
 import { AuthStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
@@ -49,7 +51,7 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 		case 'auth/user-not-found':
 			return {
 				text1: 'Giriş Başarısız',
-					text2: 'Bu email ile kayıtlı kullanıcı bulunamadı.',
+				text2: 'Bu email ile kayıtlı kullanıcı bulunamadı.',
 				type: 'generic',
 			};
 		case 'auth/wrong-password':
@@ -62,25 +64,25 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 		case 'auth/invalid-email':
 			return {
 				text1: 'Geçersiz email',
-				text2: 'Lütfen Geçerli bir email adresi girin.',
+				text2: 'Lütfen geçerli bir email adresi girin.',
 				type: 'generic',
 			};
 		case 'auth/too-many-requests':
 			return {
-				text1: 'Cok fazla deneme',
-				text2: 'Lütfen bir Süre bekleyip tekrar deneyin.',
+				text1: 'Çok fazla deneme',
+				text2: 'Lütfen bir süre bekleyip tekrar deneyin.',
 				type: 'generic',
 			};
 		case 'auth/network-request-failed':
 			return {
-					text1: 'Bağlantı hatası',
+				text1: 'Bağlantı hatası',
 				text2: 'İnternet bağlantınızı kontrol edin.',
 				type: 'network',
 			};
 		default:
 			return {
 				text1: 'Giriş Başarısız',
-				text2: 'Beklenmeyen bir hata Oluştu. Lütfen tekrar deneyin.',
+				text2: 'Beklenmeyen bir hata oluştu. Lütfen tekrar deneyin.',
 				type: 'generic',
 			};
 	}
@@ -88,9 +90,9 @@ const mapFirebaseErrorToTurkish = (error: unknown): FirebaseErrorMapping => {
 
 const LoginScreen = ({ navigation }: Props) => {
 	const { signInWithEmail, signInWithGoogle, resetPassword, isSubmitting } = useAuth();
+	const { isOffline } = useNetworkStatus();
 	const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 	const [isResetSheetVisible, setIsResetSheetVisible] = useState(false);
-	const [hasNetworkError, setHasNetworkError] = useState(false);
 
 	const {
 		control,
@@ -136,15 +138,20 @@ const LoginScreen = ({ navigation }: Props) => {
 	);
 
 	const onSubmit = handleSubmit(async values => {
-		setHasNetworkError(false);
+		if (isOffline) {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İnternet bağlantısı yok',
+				text2: 'Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+			});
+			return;
+		}
+
 		try {
 			await signInWithEmail(values.email.trim(), values.password);
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
-			if (mappedError.type === 'network') {
-				setHasNetworkError(true);
-			}
-
 			Toast.show({
 				type: 'error',
 				position: 'top',
@@ -155,15 +162,20 @@ const LoginScreen = ({ navigation }: Props) => {
 	});
 
 	const onGoogleSignIn = async () => {
-		setHasNetworkError(false);
+		if (isOffline) {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İnternet bağlantısı yok',
+				text2: 'Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+			});
+			return;
+		}
+
 		try {
 			await signInWithGoogle();
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
-			if (mappedError.type === 'network') {
-				setHasNetworkError(true);
-			}
-
 			Toast.show({
 				type: 'error',
 				position: 'top',
@@ -174,7 +186,16 @@ const LoginScreen = ({ navigation }: Props) => {
 	};
 
 	const onResetPassword = handleResetSubmit(async values => {
-		setHasNetworkError(false);
+		if (isOffline) {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'İnternet bağlantısı yok',
+				text2: 'Lütfen bağlantınızı kontrol edip tekrar deneyin.',
+			});
+			return;
+		}
+
 		try {
 			await resetPassword(values.email.trim());
 			setIsResetSheetVisible(false);
@@ -186,10 +207,6 @@ const LoginScreen = ({ navigation }: Props) => {
 			});
 		} catch (error) {
 			const mappedError = mapFirebaseErrorToTurkish(error);
-			if (mappedError.type === 'network') {
-				setHasNetworkError(true);
-			}
-
 			Toast.show({
 				type: 'error',
 				position: 'top',
@@ -201,7 +218,7 @@ const LoginScreen = ({ navigation }: Props) => {
 
 	return (
 		<SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
+			<StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
 			<KeyboardAvoidingView
 				style={styles.keyboardAvoid}
 				behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -211,25 +228,16 @@ const LoginScreen = ({ navigation }: Props) => {
 					keyboardShouldPersistTaps="handled"
 					showsVerticalScrollIndicator={false}
 				>
-					<View style={styles.brandingSection}>
-						<View style={styles.brandIconWrap}>
-							<MaterialCommunityIcons name="flower-lotus" size={74} color={colors.primary} />
-						</View>
+					<LinearGradient
+						colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
+						start={{ x: 0, y: 0 }}
+						end={{ x: 1, y: 1 }}
+						style={styles.heroSection}
+					>
+						<MaterialCommunityIcons name="meditation" size={64} color={colors.textOnPrimary} />
 						<Text style={styles.brandTitle}>YogAI</Text>
 						<Text style={styles.brandSubtitle}>Kişisel AI yoga asistanınız</Text>
-					</View>
-
-					{hasNetworkError ? (
-						<View style={styles.errorBox}>
-							<ErrorView
-								type="network"
-								onRetry={() => {
-									setHasNetworkError(false);
-									void onSubmit();
-								}}
-							/>
-						</View>
-					) : null}
+					</LinearGradient>
 
 					<View style={styles.formSection}>
 						<Controller
@@ -245,7 +253,7 @@ const LoginScreen = ({ navigation }: Props) => {
 							render={({ field: { value, onChange } }) => (
 								<Input
 									label="Email"
-									placeholder="ornek@email.com"
+									placeholder="Email adresiniz"
 									value={value}
 									onChangeText={onChange}
 									error={errors.email?.message}
@@ -285,6 +293,16 @@ const LoginScreen = ({ navigation }: Props) => {
 							)}
 						/>
 
+						<Pressable
+							onPress={() => setIsResetSheetVisible(true)}
+							disabled={isSubmitting}
+							style={styles.forgotContainer}
+							accessibilityRole="button"
+							accessibilityLabel="Şifremi unuttum"
+						>
+							<Text style={styles.forgotText}>Şifremi unuttum</Text>
+						</Pressable>
+
 						<Button
 							title="Giriş Yap"
 							onPress={onSubmit}
@@ -296,29 +314,26 @@ const LoginScreen = ({ navigation }: Props) => {
 							accessibilityLabel="Giriş yap"
 						/>
 
-						<Pressable
-							onPress={() => setIsResetSheetVisible(true)}
-							disabled={isSubmitting}
-							style={styles.forgotContainer}
-							accessibilityRole="button"
-							accessibilityLabel="Şifremi unuttum"
-						>
-							<Text style={styles.forgotText}>Şifremi unuttum</Text>
-						</Pressable>
-
 						{separator}
 
-						<Button
-							title="Google ile Giriş Yap"
+						<Pressable
 							onPress={onGoogleSignIn}
-							variant="outline"
-							size="lg"
-							icon="google"
-							loading={isSubmitting}
 							disabled={isSubmitting}
-							fullWidth
-							accessibilityLabel="Google ile Giriş yap"
-						/>
+							style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed, isSubmitting && styles.googleButtonDisabled]}
+							accessibilityRole="button"
+							accessibilityLabel="Google ile giriş yap"
+						>
+							{isSubmitting ? (
+								<ActivityIndicator size="small" color={colors.textSecondary} />
+							) : (
+								<>
+									<View style={styles.googleIconWrap}>
+										<Text style={styles.googleIconText}>G</Text>
+									</View>
+									<Text style={styles.googleButtonText}>Google ile Giriş Yap</Text>
+								</>
+							)}
+						</Pressable>
 
 						<View style={styles.registerRow}>
 							<Text style={styles.registerHint}>Hesabın yok mu?</Text>
@@ -353,7 +368,7 @@ const LoginScreen = ({ navigation }: Props) => {
 					render={({ field: { value, onChange } }) => (
 						<Input
 							label="Email"
-							placeholder="ornek@email.com"
+							placeholder="Email adresiniz"
 							value={value}
 							onChangeText={onChange}
 							error={resetErrors.email?.message}
@@ -399,51 +414,41 @@ const styles = StyleSheet.create({
 		flex: 1,
 	},
 	scrollContent: {
-		paddingHorizontal: spacing.base,
+		flexGrow: 1,
 		paddingBottom: spacing.huge,
 	},
-	brandingSection: {
-		minHeight: 260,
+	heroSection: {
+		minHeight: 280,
 		alignItems: 'center',
 		justifyContent: 'center',
+		paddingHorizontal: spacing.xl,
 		paddingTop: spacing.lg,
-		paddingBottom: spacing.base,
-	},
-	brandIconWrap: {
-		width: 120,
-		height: 120,
-		borderRadius: radius.full,
-		alignItems: 'center',
-		justifyContent: 'center',
-		backgroundColor: colors.primarySoft,
-		marginBottom: spacing.base,
+		paddingBottom: spacing.xl,
+		borderBottomLeftRadius: 40,
+		borderBottomRightRadius: 40,
 	},
 	brandTitle: {
 		...typography.display,
-		color: colors.primary,
+		color: colors.textOnPrimary,
+		marginTop: spacing.sm,
 	},
 	brandSubtitle: {
-		...typography.body,
-		color: colors.textSecondary,
+		...typography.bodySm,
+		color: 'rgba(255,255,255,0.82)',
 		marginTop: spacing.xs,
 	},
 	formSection: {
-		backgroundColor: colors.surface,
-		borderRadius: radius.xl,
-		paddingHorizontal: spacing.base,
-		paddingTop: spacing.lg,
+		paddingHorizontal: spacing.xl,
+		paddingTop: spacing.xl,
 		paddingBottom: spacing.xl,
-		borderWidth: 1,
-		borderColor: colors.borderLight,
 	},
 	forgotContainer: {
 		alignSelf: 'flex-end',
-		marginBottom: spacing.base,
+		marginBottom: spacing.lg,
 	},
 	forgotText: {
-		...typography.bodySm,
-		color: colors.textSecondary,
-		textDecorationLine: 'underline',
+		...typography.bodySmMedium,
+		color: colors.primary,
 	},
 	separatorRow: {
 		flexDirection: 'row',
@@ -459,6 +464,41 @@ const styles = StyleSheet.create({
 	separatorText: {
 		...typography.caption,
 		color: colors.textMuted,
+	},
+	googleButton: {
+		minHeight: 52,
+		borderRadius: radius.lg,
+		borderWidth: 1,
+		borderColor: colors.border,
+		backgroundColor: colors.surface,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+	},
+	googleButtonPressed: {
+		opacity: 0.9,
+	},
+	googleButtonDisabled: {
+		opacity: 0.6,
+	},
+	googleIconWrap: {
+		width: 22,
+		height: 22,
+		borderRadius: radius.full,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: '#FFFFFF',
+		borderWidth: 1,
+		borderColor: colors.borderLight,
+		marginRight: spacing.sm,
+	},
+	googleIconText: {
+		...typography.bodySmMedium,
+		color: '#4285F4',
+	},
+	googleButtonText: {
+		...typography.buttonLg,
+		color: colors.text,
 	},
 	registerRow: {
 		flexDirection: 'row',
@@ -476,9 +516,6 @@ const styles = StyleSheet.create({
 	registerAction: {
 		...typography.bodySmMedium,
 		color: colors.primary,
-	},
-	errorBox: {
-		marginBottom: spacing.base,
 	},
 	sheetActions: {
 		gap: spacing.sm,
