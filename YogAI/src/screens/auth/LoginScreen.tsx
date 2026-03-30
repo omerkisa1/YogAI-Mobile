@@ -5,7 +5,6 @@ import {
 	ActivityIndicator,
 	KeyboardAvoidingView,
 	Platform,
-	Pressable,
 	ScrollView,
 	StatusBar,
 	StyleSheet,
@@ -21,6 +20,7 @@ import { useAuth } from '../../features/auth/hooks/useAuth';
 import BottomSheet from '../../shared/components/BottomSheet';
 import Button from '../../shared/components/Button';
 import Input from '../../shared/components/Input';
+import Touchable from '../../shared/components/Touchable';
 import { useNetworkStatus } from '../../shared/hooks/useNetworkStatus';
 import { AuthStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -293,15 +293,16 @@ const LoginScreen = ({ navigation }: Props) => {
 							)}
 						/>
 
-						<Pressable
+						<Touchable
 							onPress={() => setIsResetSheetVisible(true)}
 							disabled={isSubmitting}
 							style={styles.forgotContainer}
+							borderRadius={radius.md}
 							accessibilityRole="button"
 							accessibilityLabel="Şifremi unuttum"
 						>
 							<Text style={styles.forgotText}>Şifremi unuttum</Text>
-						</Pressable>
+						</Touchable>
 
 						<Button
 							title="Giriş Yap"
@@ -316,10 +317,11 @@ const LoginScreen = ({ navigation }: Props) => {
 
 						{separator}
 
-						<Pressable
+						<Touchable
 							onPress={onGoogleSignIn}
 							disabled={isSubmitting}
-							style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed, isSubmitting && styles.googleButtonDisabled]}
+							style={[styles.googleButton, isSubmitting && styles.googleButtonDisabled]}
+							borderRadius={radius.lg}
 							accessibilityRole="button"
 							accessibilityLabel="Google ile giriş yap"
 						>
@@ -333,18 +335,19 @@ const LoginScreen = ({ navigation }: Props) => {
 									<Text style={styles.googleButtonText}>Google ile Giriş Yap</Text>
 								</>
 							)}
-						</Pressable>
+						</Touchable>
 
 						<View style={styles.registerRow}>
 							<Text style={styles.registerHint}>Hesabın yok mu?</Text>
-							<Pressable
+							<Touchable
 								onPress={() => navigation.navigate('Register')}
 								style={styles.registerPressable}
+								borderRadius={radius.md}
 								accessibilityRole="button"
-									accessibilityLabel="Kayıt ol ekranına git"
+								accessibilityLabel="Kayıt ol ekranına git"
 							>
 								<Text style={styles.registerAction}>Kayıt Ol</Text>
-							</Pressable>
+							</Touchable>
 						</View>
 					</View>
 				</ScrollView>

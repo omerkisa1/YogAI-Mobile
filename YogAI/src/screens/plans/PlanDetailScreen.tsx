@@ -1,8 +1,7 @@
-﻿import React, { useMemo, useRef, useState } from 'react';
+﻿import React, { useRef, useState } from 'react';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
 	Animated,
-	Pressable,
 	SafeAreaView,
 	ScrollView,
 	StatusBar,
@@ -17,11 +16,12 @@ import Toast from 'react-native-toast-message';
 import { useDeletePlan, useUpdatePlan } from '../../features/plans/hooks/useCreatePlan';
 import { usePlan } from '../../features/plans/hooks/usePlan';
 import { useStartTrainingSession } from '../../features/training/hooks/useTraining';
-import BottomSheet from '../../shared/components/BottomSheet';
+import AppModal from '../../shared/components/AppModal';
 import Button from '../../shared/components/Button';
 import Card from '../../shared/components/Card';
 import ErrorView from '../../shared/components/ErrorView';
 import LoadingView from '../../shared/components/LoadingView';
+import Touchable from '../../shared/components/Touchable';
 import { Exercise, Plan } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -102,9 +102,10 @@ const ExerciseItem = ({
 	const categoryLabel = categoryLabelMap[exercise.category] ?? (exercise.category || 'unknown');
 
 	return (
-		<Pressable
+		<Touchable
 			onPress={onToggle}
 			style={styles.exercisePressable}
+			borderRadius={radius.lg}
 			accessibilityRole="button"
 			accessibilityLabel={`${exercise.name_tr || exercise.name_en} açılır kart`}
 		>
@@ -160,7 +161,7 @@ const ExerciseItem = ({
 					<Text style={styles.exerciseDescription}>{exercise.instructions_tr || exercise.instructions_en}</Text>
 				</Animated.View>
 			</Card>
-		</Pressable>
+		</Touchable>
 	);
 };
 
@@ -172,7 +173,8 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 	const deletePlanMutation = useDeletePlan();
 	const startSessionMutation = useStartTrainingSession();
 
-	const [isDeleteSheetVisible, setDeleteSheetVisible] = useState(false);
+	const [showPlanActionsModal, setShowPlanActionsModal] = useState(false);
+	const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 	const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
 	const animationValuesRef = useRef<Record<string, Animated.Value>>({});
 
@@ -234,7 +236,8 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 	const onDeletePlan = async () => {
 		try {
 			await deletePlanMutation.mutateAsync(planId);
-			setDeleteSheetVisible(false);
+			setShowDeleteConfirmModal(false);
+			setShowPlanActionsModal(false);
 			Toast.show({
 				type: 'success',
 				position: 'top',
@@ -325,22 +328,24 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 					style={[styles.hero, { paddingTop: insets.top + spacing.base }]}
 				>
 					<View style={styles.heroTopRow}>
-						<Pressable
+						<Touchable
 							onPress={navigation.goBack}
 							style={styles.heroBackButton}
+							borderRadius={radius.md}
 							accessibilityRole="button"
 							accessibilityLabel="Geri"
 						>
 							<MaterialCommunityIcons name="chevron-left" size={24} color={colors.textOnPrimary} />
 							<Text style={styles.heroBackText}>Geri</Text>
-						</Pressable>
+						</Touchable>
 
 						<View style={styles.heroActions}>
-							<Pressable
+							<Touchable
 								onPress={() => {
 									void onToggleFavorite();
 								}}
 								style={styles.heroActionButton}
+								borderRadius={radius.full}
 								accessibilityRole="button"
 								accessibilityLabel="Favori"
 							>
@@ -349,12 +354,13 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 									size={20}
 									color={colors.textOnPrimary}
 								/>
-							</Pressable>
-							<Pressable
+							</Touchable>
+							<Touchable
 								onPress={() => {
 									void onTogglePin();
 								}}
 								style={styles.heroActionButton}
+								borderRadius={radius.full}
 								accessibilityRole="button"
 								accessibilityLabel="Sabitle"
 							>
@@ -363,15 +369,16 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 									size={20}
 									color={colors.textOnPrimary}
 								/>
-							</Pressable>
-							<Pressable
-								onPress={() => setDeleteSheetVisible(true)}
+							</Touchable>
+							<Touchable
+								onPress={() => setShowPlanActionsModal(true)}
 								style={styles.heroActionButton}
+								borderRadius={radius.full}
 								accessibilityRole="button"
 								accessibilityLabel="Plan menü"
 							>
 								<MaterialCommunityIcons name="dots-vertical" size={20} color={colors.textOnPrimary} />
-							</Pressable>
+							</Touchable>
 						</View>
 					</View>
 
@@ -436,35 +443,43 @@ const PlanDetailScreen = ({ route, navigation }: Props) => {
 				/>
 			</View>
 
-			<BottomSheet
-				visible={isDeleteSheetVisible}
-				onClose={() => setDeleteSheetVisible(false)}
-				title="Planı Sil"
-			>
-				<Text style={styles.deletePrompt}>Bu planı silmek istediğinize emin misiniz?</Text>
-				<View style={styles.deleteActions}>
-					<Button
-						title="İptal"
-						onPress={() => setDeleteSheetVisible(false)}
-						variant="ghost"
-						size="md"
-						fullWidth
-						accessibilityLabel="Plan silmeyi iptal et"
-					/>
-					<Button
-						title="Sil"
-						onPress={() => {
+			<AppModal
+				visible={showPlanActionsModal}
+				onClose={() => setShowPlanActionsModal(false)}
+				title="Plan İşlemleri"
+				actions={[
+					{
+						label: 'Planı Sil',
+						variant: 'danger',
+						onPress: () => {
+							setShowPlanActionsModal(false);
+							setShowDeleteConfirmModal(true);
+						},
+					},
+				]}
+				dismissOnBackdrop
+			/>
+
+			<AppModal
+				visible={showDeleteConfirmModal}
+				onClose={() => setShowDeleteConfirmModal(false)}
+				title="Bu planı silmek istediğinize emin misiniz?"
+				description="Bu işlem geri alınamaz."
+				icon="delete-outline"
+				iconColor={colors.error}
+				actions={[
+					{ label: 'İptal', variant: 'ghost', onPress: () => setShowDeleteConfirmModal(false) },
+					{
+						label: 'Sil',
+						variant: 'danger',
+						onPress: () => {
 							void onDeletePlan();
-						}}
-						variant="danger"
-						size="md"
-						fullWidth
-						loading={deletePlanMutation.isPending}
-						disabled={deletePlanMutation.isPending}
-						accessibilityLabel="Planı sil"
-					/>
-				</View>
-			</BottomSheet>
+						},
+					},
+				]}
+				autoDismissMs={10000}
+				dismissOnBackdrop
+			/>
 		</SafeAreaView>
 	);
 };
@@ -674,14 +689,6 @@ const styles = StyleSheet.create({
 		backgroundColor: colors.surface,
 		borderTopWidth: 1,
 		borderTopColor: colors.borderLight,
-	},
-	deletePrompt: {
-		...typography.bodySm,
-		color: colors.textSecondary,
-		marginBottom: spacing.base,
-	},
-	deleteActions: {
-		gap: spacing.sm,
 	},
 });
 

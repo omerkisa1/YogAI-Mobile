@@ -1,7 +1,9 @@
 import React, { ReactNode } from 'react';
-import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
+import { cardStyle } from '../../theme/shadows';
+import Touchable from './Touchable';
 
 export type CardVariant = 'default' | 'elevated' | 'outlined';
 
@@ -13,31 +15,21 @@ interface CardProps {
 	accessibilityLabel?: string;
 }
 
-const cardShadow: ViewStyle = {
-	shadowColor: '#1A1A2E',
-	shadowOffset: { width: 0, height: 2 },
-	shadowOpacity: 0.06,
-	shadowRadius: 12,
-	elevation: 3,
-	borderWidth: 1,
-	borderColor: '#F0EFEB',
-};
-
 const variantStyles: Record<CardVariant, ViewStyle> = {
 	default: {
+		...cardStyle,
 		backgroundColor: colors.surface,
 		borderColor: colors.borderLight,
-		...cardShadow,
 	},
 	elevated: {
+		...cardStyle,
 		backgroundColor: colors.surfaceElevated,
 		borderColor: colors.borderLight,
-		...cardShadow,
 	},
 	outlined: {
+		...cardStyle,
 		backgroundColor: colors.surface,
 		borderColor: colors.border,
-		...cardShadow,
 	},
 };
 
@@ -46,14 +38,15 @@ const Card = ({ children, variant = 'default', style, onPress, accessibilityLabe
 
 	if (onPress) {
 		return (
-			<Pressable
-				style={({ pressed }) => [styles.base, variantStyle, pressed && styles.pressed, style]}
+			<Touchable
+				style={[styles.base, variantStyle, style]}
+				borderRadius={radius.lg}
 				onPress={onPress}
 				accessibilityRole="button"
 				accessibilityLabel={accessibilityLabel}
 			>
 				{children}
-			</Pressable>
+			</Touchable>
 		);
 	}
 
@@ -65,10 +58,6 @@ const styles = StyleSheet.create({
 		borderRadius: radius.lg,
 		borderWidth: 1,
 		padding: spacing.base,
-	},
-	pressed: {
-		opacity: 0.96,
-		transform: [{ scale: 0.99 }],
 	},
 });
 

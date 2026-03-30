@@ -2,7 +2,6 @@
 import {
 	Dimensions,
 	FlatList,
-	Pressable,
 	RefreshControl,
 	SafeAreaView,
 	ScrollView,
@@ -24,6 +23,7 @@ import EmptyState from '../../shared/components/EmptyState';
 import ErrorView from '../../shared/components/ErrorView';
 import PlanCard from '../../shared/components/PlanCard';
 import SkeletonLoader from '../../shared/components/SkeletonLoader';
+import Touchable from '../../shared/components/Touchable';
 import { Plan } from '../../shared/types/plan';
 import { MainTabParamList, RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -69,11 +69,11 @@ const quickStartPresets: QuickStartPreset[] = [
 		subtitle: '15dk • Tam Vücut',
 		level: 'beginner',
 		duration: 15,
-		gradient: [colors.primaryLight, colors.primaryDark],
-		titleColor: colors.textOnPrimary,
-		subtitleColor: colors.textOnPrimary,
-		actionColor: colors.textOnPrimary,
-		iconColor: colors.textOnPrimary,
+		gradient: [colors.gradientBeginner[0], colors.gradientBeginner[1]],
+		titleColor: colors.primaryDark,
+		subtitleColor: colors.primaryDark,
+		actionColor: colors.primaryDark,
+		iconColor: colors.primaryDark,
 	},
 	{
 		id: 'quick-intermediate',
@@ -82,11 +82,11 @@ const quickStartPresets: QuickStartPreset[] = [
 		subtitle: '25dk • Denge',
 		level: 'intermediate',
 		duration: 25,
-		gradient: [colors.secondaryLight, colors.secondary],
-		titleColor: colors.text,
-		subtitleColor: colors.textSecondary,
-		actionColor: colors.text,
-		iconColor: colors.text,
+		gradient: [colors.gradientIntermediate[0], colors.gradientIntermediate[1]],
+		titleColor: colors.warningDark,
+		subtitleColor: colors.warningDark,
+		actionColor: colors.warningDark,
+		iconColor: colors.warningDark,
 	},
 	{
 		id: 'quick-advanced',
@@ -95,11 +95,11 @@ const quickStartPresets: QuickStartPreset[] = [
 		subtitle: '35dk • Güç',
 		level: 'advanced',
 		duration: 35,
-		gradient: [colors.difficulty4, colors.difficulty5],
-		titleColor: colors.textOnPrimary,
-		subtitleColor: colors.textOnPrimary,
-		actionColor: colors.textOnPrimary,
-		iconColor: colors.textOnPrimary,
+		gradient: [colors.gradientAdvanced[0], colors.gradientAdvanced[1]],
+		titleColor: colors.error,
+		subtitleColor: colors.error,
+		actionColor: colors.error,
+		iconColor: colors.error,
 	},
 ];
 
@@ -135,12 +135,16 @@ const HomeScreen = () => {
 	const avatarInitial = profileName.charAt(0).toUpperCase() || 'Y';
 	const dailyMessage = useMemo(() => getDailyMessage(), []);
 
-	const stats = statsQuery.data ?? {
-		total_sessions: 0,
-		total_duration_sec: 0,
-		average_accuracy: 0,
-		current_streak: 0,
-	};
+	const stats = useMemo(
+		() =>
+			statsQuery.data ?? {
+				total_sessions: 0,
+				total_duration_sec: 0,
+				average_accuracy: 0,
+				current_streak: 0,
+			},
+		[statsQuery.data],
+	);
 
 	const statCards = useMemo<StatCardData[]>(
 		() => [
@@ -246,7 +250,7 @@ const HomeScreen = () => {
 
 	const renderQuickStartCard = useCallback(
 		({ item }: { item: QuickStartPreset }) => (
-			<Pressable
+			<Touchable
 				onPress={() =>
 					navigation.navigate('CreatePlan', {
 						presetLevel: item.level,
@@ -254,6 +258,7 @@ const HomeScreen = () => {
 					})
 				}
 				style={[styles.quickStartCard, { width: quickStartCardWidth }]}
+				borderRadius={radius.xl}
 				accessibilityRole="button"
 				accessibilityLabel={`${item.title} hızlı antrenmanı başlat`}
 			>
@@ -268,7 +273,7 @@ const HomeScreen = () => {
 						<MaterialCommunityIcons name="arrow-right" size={16} color={item.actionColor} />
 					</View>
 				</LinearGradient>
-			</Pressable>
+			</Touchable>
 		),
 		[navigation, quickStartCardWidth],
 	);
@@ -300,7 +305,7 @@ const HomeScreen = () => {
 				refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />}
 				showsVerticalScrollIndicator={false}
 			>
-				<LinearGradient colors={[colors.gradientWarm[0], colors.gradientWarm[1]]} style={styles.topBar}>
+				<LinearGradient colors={[colors.gradientHero[0], colors.gradientHero[1]]} style={styles.topBar}>
 					<View>
 						<Text style={styles.greeting}>Merhaba, {profileName}</Text>
 						<Text style={styles.dailyMessage}>{dailyMessage}</Text>
@@ -340,13 +345,14 @@ const HomeScreen = () => {
 
 				<View style={styles.sectionHeaderRow}>
 					<Text style={styles.sectionTitle}>Planlarım</Text>
-					<Pressable
+					<Touchable
 						onPress={() => tabNavigation.navigate('Plans')}
+						borderRadius={radius.md}
 						accessibilityRole="button"
 						accessibilityLabel="Tüm planları gör"
 					>
 						<Text style={styles.viewAllText}>Tümünü Gör</Text>
-					</Pressable>
+					</Touchable>
 				</View>
 
 				{plansQuery.isLoading && !plansQuery.data ? (
@@ -360,8 +366,6 @@ const HomeScreen = () => {
 						icon="calendar-plus"
 						title="Henüz planınız yok"
 						description="AI ile ilk yoga planınızı oluşturmaya başlayın."
-						actionLabel="İlk Planı Oluştur"
-						onAction={() => navigation.navigate('CreatePlan')}
 					/>
 				) : (
 					<View style={styles.planList}>
@@ -411,28 +415,30 @@ const styles = StyleSheet.create({
 		marginTop: spacing.sm,
 		marginBottom: spacing.lg,
 		borderWidth: 1,
-		borderColor: colors.borderLight,
+		borderColor: 'rgba(255,255,255,0.15)',
 	},
 	greeting: {
 		...typography.h3,
-		color: colors.text,
+		color: colors.textOnDark,
 	},
 	dailyMessage: {
 		...typography.bodySm,
-		color: colors.textSecondary,
+		color: 'rgba(255,255,255,0.72)',
 		marginTop: spacing.xs,
 	},
 	avatar: {
-		width: 44,
-		height: 44,
-		borderRadius: radius.full,
-		backgroundColor: colors.primary,
+		width: 48,
+		height: 48,
+		borderRadius: 12,
+		backgroundColor: colors.surface,
+		borderWidth: 2,
+		borderColor: 'rgba(255,255,255,0.9)',
 		alignItems: 'center',
 		justifyContent: 'center',
 	},
 	avatarText: {
 		...typography.bodySmMedium,
-		color: colors.textOnPrimary,
+		color: colors.primary,
 	},
 	statsGrid: {
 		flexDirection: 'row',

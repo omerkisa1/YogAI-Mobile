@@ -4,8 +4,6 @@ export const colors = {
 	primaryLight: '#3DAF75',
 	primaryDark: '#1E6B45',
 	primarySoft: '#E8F5EE',
-	primaryGradientStart: '#2D8B5E',
-	primaryGradientEnd: '#1B5E3F',
 
 	// Secondary — sıcak toprak
 	secondary: '#C4956A',
@@ -16,19 +14,20 @@ export const colors = {
 	accent: '#7C6FAE',
 	accentSoft: '#F0EDF7',
 
-	// Arka planlar — SICAK, saf beyaz değil
-	background: '#F8F7F4',
-	surface: '#FFFFFF',
-	surfaceElevated: '#F5F4F0',
+	// Arka planlar — SICAK tonlar, saf beyaz yok
+	background: '#F5F4F0',
+	backgroundElevated: '#EEEEE8',
+	surface: '#FAFAF7',
+	surfaceElevated: '#F0EFEB',
 	surfaceWarm: '#FFF9F2',
 
-	// Gradient presets (LinearGradient için)
-	gradientPrimary: ['#2D8B5E', '#1B5E3F'],
-	gradientWarm: ['#F8F7F4', '#F0EFEB'],
-	gradientHero: ['#1B5E3F', '#0F3D2A'],
-	gradientBeginner: ['#E8F5EE', '#C8E6D5'],
-	gradientIntermediate: ['#FFF3E0', '#FFE0B2'],
-	gradientAdvanced: ['#FFEBEE', '#FFCDD2'],
+	// Gradient tanımları
+	gradientPrimary: ['#2D8B5E', '#1B5E3F'] as const,
+	gradientWarm: ['#F8F7F4', '#F0EFEB'] as const,
+	gradientHero: ['#1B5E3F', '#0F3D2A'] as const,
+	gradientBeginner: ['#D4EDDA', '#A8D5B8'] as const,
+	gradientIntermediate: ['#FFE8CC', '#FFD19A'] as const,
+	gradientAdvanced: ['#F8D7DA', '#F1AEB5'] as const,
 
 	// Stat kart arka planları
 	statGreen: '#E8F5EE',
@@ -45,13 +44,18 @@ export const colors = {
 
 	// Semantic
 	success: '#34C759',
+	successSoft: '#D4EDDA',
 	warning: '#FF9500',
+	warningSoft: '#FFF3E0',
+	warningDark: '#E65100',
 	error: '#FF3B30',
+	errorSoft: '#FDECEA',
 	info: '#007AFF',
 
 	// Border
 	border: '#E5E5E3',
 	borderLight: '#F0EFEB',
+	borderFocus: '#2D8B5E',
 
 	// Difficulty
 	difficulty1: '#34C759',
@@ -66,4 +70,8 @@ export const colors = {
 	categoryProne: '#C4956A',
 	categorySupine: '#5AC8FA',
 	categoryInversion: '#FF6B35',
+
+	// Overlay
+	overlay: 'rgba(0,0,0,0.5)',
+	overlayLight: 'rgba(0,0,0,0.3)',
 } as const;

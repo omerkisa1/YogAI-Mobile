@@ -1,8 +1,9 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import Touchable from '../shared/components/Touchable';
 import { colors } from '../theme/colors';
 import { radius, spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -56,11 +57,12 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 					const accessibilityLabel = descriptors[route.key]?.options.tabBarAccessibilityLabel ?? meta.label;
 
 					return (
-						<Pressable
+						<Touchable
 							key={route.key}
 							onPress={onPress}
 							onLongPress={onLongPress}
-							style={({ pressed }) => [styles.tabItem, pressed && styles.pressed]}
+							style={styles.tabItem}
+							borderRadius={radius.md}
 							accessibilityRole="button"
 							accessibilityState={isFocused ? { selected: true } : {}}
 							accessibilityLabel={accessibilityLabel}
@@ -68,7 +70,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: BottomTabBarProps) => 
 							{isFocused ? <View style={styles.activeIndicator} /> : <View style={styles.inactiveIndicator} />}
 							<MaterialCommunityIcons name={icon} size={24} color={color} />
 							<Text style={[styles.tabLabel, isFocused ? styles.tabLabelActive : styles.tabLabelInactive]}>{meta.label}</Text>
-						</Pressable>
+						</Touchable>
 					);
 				})}
 			</View>
@@ -98,14 +100,14 @@ const styles = StyleSheet.create({
 		gap: spacing.xs,
 	},
 	activeIndicator: {
-		width: 28,
+		width: 24,
 		height: 3,
 		borderRadius: radius.full,
 		backgroundColor: colors.primary,
 		marginBottom: spacing.xs,
 	},
 	inactiveIndicator: {
-		width: 28,
+		width: 24,
 		height: 3,
 		borderRadius: radius.full,
 		backgroundColor: 'transparent',
@@ -121,9 +123,6 @@ const styles = StyleSheet.create({
 	tabLabelInactive: {
 		...typography.caption,
 		color: colors.textMuted,
-	},
-	pressed: {
-		opacity: 0.85,
 	},
 });
 

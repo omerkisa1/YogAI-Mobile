@@ -1,10 +1,9 @@
-﻿import React, { useCallback, useEffect, useLayoutEffect } from 'react';
+﻿import React, { useEffect, useLayoutEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
 	KeyboardAvoidingView,
 	Platform,
-	Pressable,
 	SafeAreaView,
 	ScrollView,
 	StatusBar,
@@ -20,6 +19,7 @@ import Chip from '../../shared/components/Chip';
 import ErrorView from '../../shared/components/ErrorView';
 import Input from '../../shared/components/Input';
 import LoadingView from '../../shared/components/LoadingView';
+import Touchable from '../../shared/components/Touchable';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
@@ -40,30 +40,30 @@ interface ProfileFormValues {
 }
 
 const levelOptions: { key: Level; label: string; icon: string }[] = [
-	{ key: 'beginner', label: 'Baslangic', icon: 'leaf' },
+	{ key: 'beginner', label: 'Başlangıç', icon: 'leaf' },
 	{ key: 'intermediate', label: 'Orta', icon: 'tree' },
-	{ key: 'advanced', label: 'Ileri', icon: 'fire' },
+	{ key: 'advanced', label: 'İleri', icon: 'fire' },
 ];
 
 const goalOptions: { key: Goal; label: string }[] = [
 	{ key: 'flexibility', label: 'Esneklik' },
-	{ key: 'strength', label: 'Guc' },
+	{ key: 'strength', label: 'Güç' },
 	{ key: 'balance', label: 'Denge' },
 	{ key: 'stress_relief', label: 'Stres Azaltma' },
 	{ key: 'mobility', label: 'Mobilite' },
-	{ key: 'posture', label: 'Postur' },
+	{ key: 'posture', label: 'Postür' },
 ];
 
 const injuryOptions: { key: Injury; label: string }[] = [
 	{ key: 'knee_injury', label: 'Diz' },
-	{ key: 'ankle_injury', label: 'Ayak Bilegi' },
-	{ key: 'herniated_disc', label: 'Bel Fitigi' },
+	{ key: 'ankle_injury', label: 'Ayak Bileği' },
+	{ key: 'herniated_disc', label: 'Bel Fıtığı' },
 	{ key: 'low_back_pain', label: 'Bel' },
 	{ key: 'shoulder_injury', label: 'Omuz' },
 	{ key: 'wrist_injury', label: 'Bilek' },
 	{ key: 'neck_injury', label: 'Boyun' },
-	{ key: 'groin_injury', label: 'Kasik' },
-	{ key: 'hip_injury', label: 'Kalca' },
+	{ key: 'groin_injury', label: 'Kasık' },
+	{ key: 'hip_injury', label: 'Kalça' },
 ];
 
 const languageOptions: { key: AppLanguage; label: string }[] = [
@@ -115,40 +115,38 @@ const EditProfileScreen = ({ navigation }: Props) => {
 		});
 	}, [profileQuery.data, reset]);
 
-	const onSubmit = useCallback(
-		handleSubmit(async values => {
-			try {
-				await updateMutation.mutateAsync(values);
-				Toast.show({
-					type: 'success',
-					position: 'top',
-					text1: 'Profil Güncellendi',
-					text2: 'Değişiklikleriniz kaydedildi.',
-				});
-				navigation.goBack();
-			} catch {
-				Toast.show({
-					type: 'error',
-					position: 'top',
-					text1: 'Kaydetme Başarısız',
-					text2: 'Lütfen tekrar deneyin.',
-				});
-			}
-		}),
-		[handleSubmit, navigation, updateMutation],
-	);
+	const onSubmit = handleSubmit(async values => {
+		try {
+			await updateMutation.mutateAsync(values);
+			Toast.show({
+				type: 'success',
+				position: 'top',
+				text1: 'Profil Güncellendi',
+				text2: 'Değişiklikleriniz kaydedildi.',
+			});
+			navigation.goBack();
+		} catch {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'Kaydetme Başarısız',
+				text2: 'Lütfen tekrar deneyin.',
+			});
+		}
+	});
 
 	useLayoutEffect(() => {
 		navigation.setOptions({
 			headerRight: () => (
-				<Pressable
+				<Touchable
 					onPress={onSubmit}
 					disabled={updateMutation.isPending}
+					borderRadius={radius.md}
 					accessibilityRole="button"
 					accessibilityLabel="Profili kaydet"
 				>
 					<Text style={styles.headerSave}>Kaydet</Text>
-				</Pressable>
+				</Touchable>
 			),
 		});
 	}, [navigation, onSubmit, updateMutation.isPending]);
@@ -169,7 +167,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 				<View style={styles.errorWrap}>
 					<ErrorView
 						type="generic"
-						title="Profil bilgisi alinamadi"
+						title="Profil bilgisi alınamadı"
 						description="Lütfen tekrar deneyin."
 						onRetry={() => {
 							void profileQuery.refetch();
@@ -238,12 +236,13 @@ const EditProfileScreen = ({ navigation }: Props) => {
 							{levelOptions.map(level => {
 								const selected = selectedLevel === level.key;
 								return (
-									<Pressable
+									<Touchable
 										key={level.key}
 										onPress={() => setValue('level', level.key, { shouldValidate: true })}
 										style={[styles.levelCard, selected && styles.levelCardSelected]}
+										borderRadius={radius.lg}
 										accessibilityRole="button"
-										accessibilityLabel={`${level.label} seviye sec`}
+										accessibilityLabel={`${level.label} seviye seç`}
 									>
 										<MaterialCommunityIcons
 											name={level.icon}
@@ -251,7 +250,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 											color={selected ? colors.primary : colors.textSecondary}
 										/>
 										<Text style={[styles.levelLabel, selected && styles.levelLabelSelected]}>{level.label}</Text>
-									</Pressable>
+									</Touchable>
 								);
 							})}
 						</View>
@@ -307,7 +306,7 @@ const EditProfileScreen = ({ navigation }: Props) => {
 									variant={selectedLanguage === language.key ? 'primary' : 'outline'}
 									size="md"
 									fullWidth
-									accessibilityLabel={`${language.label} dil sec`}
+									accessibilityLabel={`${language.label} dil seç`}
 								/>
 							))}
 						</View>

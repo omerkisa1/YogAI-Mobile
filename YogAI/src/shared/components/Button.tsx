@@ -2,7 +2,6 @@ import React from 'react';
 import {
 	ActivityIndicator,
 	GestureResponderEvent,
-	Pressable,
 	StyleProp,
 	StyleSheet,
 	Text,
@@ -14,6 +13,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import Touchable from './Touchable';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger';
 export type ButtonSize = 'lg' | 'md' | 'sm';
@@ -157,16 +157,16 @@ const Button = ({
 	const buttonTitle = title ?? label ?? '';
 
 	return (
-		<Pressable
-			style={({ pressed }) => [
+		<Touchable
+			style={[
 				styles.base,
 				currentSize.container,
 				fullWidth && styles.fullWidth,
 				currentVariant.container,
 				isDisabled && styles.disabled,
-				pressed && !isDisabled && styles.pressed,
 				style,
 			]}
+			borderRadius={currentSize.container.borderRadius ?? radius.md}
 			disabled={isDisabled}
 			onPress={onPress}
 			accessibilityRole="button"
@@ -195,7 +195,7 @@ const Button = ({
 					) : null}
 				</View>
 			)}
-		</Pressable>
+		</Touchable>
 	);
 };
 
@@ -218,10 +218,6 @@ const styles = StyleSheet.create({
 	},
 	disabled: {
 		opacity: 0.5,
-	},
-	pressed: {
-		opacity: 0.9,
-		transform: [{ scale: 0.985 }],
 	},
 	iconLeft: {
 		marginRight: spacing.sm,

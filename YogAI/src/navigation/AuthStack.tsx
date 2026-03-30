@@ -1,7 +1,8 @@
 ﻿import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import Touchable from '../shared/components/Touchable';
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import { colors } from '../theme/colors';
@@ -30,14 +31,15 @@ const AuthStack = () => {
 					}
 
 					return (
-						<Pressable
+						<Touchable
 							onPress={navigation.goBack}
 							style={styles.backButton}
+							borderRadius={12}
 							accessibilityRole="button"
 							accessibilityLabel="Geri"
 						>
 							<MaterialCommunityIcons name="chevron-left" size={26} color={colors.primary} />
-						</Pressable>
+						</Touchable>
 					);
 				},
 				contentStyle: { backgroundColor: colors.background },

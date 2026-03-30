@@ -1,11 +1,8 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-	Animated,
-	Easing,
 	FlatList,
-	Pressable,
 	SafeAreaView,
 	ScrollView,
 	StatusBar,
@@ -15,11 +12,19 @@ import {
 } from 'react-native';
 import axios from 'axios';
 import LinearGradient from 'react-native-linear-gradient';
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withRepeat,
+	withSequence,
+	withTiming,
+} from 'react-native-reanimated';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useCreatePlan } from '../../features/plans/hooks/useCreatePlan';
 import Button from '../../shared/components/Button';
 import ErrorView from '../../shared/components/ErrorView';
+import Touchable from '../../shared/components/Touchable';
 import {
 	AppLanguage,
 	CreatePlanRequest,
@@ -104,7 +109,7 @@ const languageOptions: { key: AppLanguage; label: string }[] = [
 
 const CreatePlanScreen = ({ navigation, route }: Props) => {
 	const createPlanMutation = useCreatePlan();
-	const pulseAnim = useRef(new Animated.Value(1)).current;
+	const pulseAnim = useSharedValue(1);
 	const [inlineValidationError, setInlineValidationError] = useState<string | null>(null);
 	const [showServerError, setShowServerError] = useState(false);
 
@@ -135,33 +140,23 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 
 	useEffect(() => {
 		if (!createPlanMutation.isPending) {
-			pulseAnim.setValue(1);
+			pulseAnim.value = withTiming(1, { duration: 150 });
 			return;
 		}
 
-		const animation = Animated.loop(
-			Animated.sequence([
-				Animated.timing(pulseAnim, {
-					toValue: 1.1,
-					duration: 750,
-					easing: Easing.inOut(Easing.ease),
-					useNativeDriver: true,
-				}),
-				Animated.timing(pulseAnim, {
-					toValue: 1,
-					duration: 750,
-					easing: Easing.inOut(Easing.ease),
-					useNativeDriver: true,
-				}),
-			]),
+		pulseAnim.value = withRepeat(
+			withSequence(
+				withTiming(1.15, { duration: 750 }),
+				withTiming(1, { duration: 750 }),
+			),
+			-1,
+			false,
 		);
-
-		animation.start();
-
-		return () => {
-			animation.stop();
-		};
 	}, [createPlanMutation.isPending, pulseAnim]);
+
+	const pulseAnimatedStyle = useAnimatedStyle(() => ({
+		transform: [{ scale: pulseAnim.value }],
+	}));
 
 	const inlineSuggestion = useMemo(
 		() => 'Öneri: Odak alanını değiştirmeyi veya süreyi kısaltmayı deneyin.',
@@ -248,10 +243,11 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 							);
 
 							return (
-								<Pressable
+								<Touchable
 									key={level.key}
 									onPress={() => setValue('level', level.key, { shouldValidate: true })}
 									style={[styles.levelCardPressable, selected && styles.levelCardPressableSelected]}
+									borderRadius={radius.lg}
 									accessibilityRole="button"
 									accessibilityLabel={`${level.label} seviye seç`}
 								>
@@ -267,7 +263,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 									) : (
 										<View style={[styles.levelCard, styles.levelCardUnselected]}>{cardContent}</View>
 									)}
-								</Pressable>
+								</Touchable>
 							);
 						})}
 					</View>
@@ -286,16 +282,17 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 						removeClippedSubviews
 						getItemLayout={(_, index) => ({ length: 82, offset: 82 * index, index })}
 						renderItem={({ item }) => (
-							<Pressable
+							<Touchable
 								onPress={() => setValue('duration', item, { shouldValidate: true })}
 								style={[styles.durationChip, item === selectedDuration ? styles.durationChipSelected : styles.durationChipUnselected]}
+								borderRadius={radius.full}
 								accessibilityRole="button"
 								accessibilityLabel={`${item} dakika seç`}
 							>
 								<Text style={[styles.durationChipText, item === selectedDuration ? styles.durationChipTextSelected : styles.durationChipTextUnselected]}>
 									{item}dk
 								</Text>
-							</Pressable>
+							</Touchable>
 						)}
 					/>
 				</View>
@@ -304,17 +301,18 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					<Text style={styles.sectionTitle}>Odak Alanı</Text>
 					<View style={styles.chipWrap}>
 						{focusOptions.map(focus => (
-							<Pressable
+							<Touchable
 								key={focus.key}
 								onPress={() => setValue('focus_area', focus.key, { shouldValidate: true })}
 								style={[styles.focusChip, selectedFocus === focus.key ? styles.focusChipSelected : styles.focusChipUnselected]}
+								borderRadius={radius.full}
 								accessibilityRole="button"
 								accessibilityLabel={`${focus.label} odak alanı seç`}
 							>
 								<Text style={[styles.focusChipText, selectedFocus === focus.key ? styles.focusChipTextSelected : styles.focusChipTextUnselected]}>
 									{focus.label}
 								</Text>
-							</Pressable>
+							</Touchable>
 						))}
 					</View>
 				</View>
@@ -323,13 +321,14 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 					<Text style={styles.sectionTitle}>Sakatlıklarınız (varsa)</Text>
 					<View style={styles.chipWrap}>
 						{injuryOptions.map(injury => (
-							<Pressable
+							<Touchable
 								key={injury.key}
 								onPress={() => toggleInjury(injury.key)}
 								style={[
 									styles.injuryChip,
 									selectedInjuries.includes(injury.key) ? styles.injuryChipSelected : styles.injuryChipUnselected,
 								]}
+								borderRadius={radius.full}
 								accessibilityRole="button"
 								accessibilityLabel={`${injury.label} sakatlık seç`}
 							>
@@ -341,7 +340,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 								>
 									{injury.label}
 								</Text>
-							</Pressable>
+							</Touchable>
 						))}
 					</View>
 				</View>
@@ -411,7 +410,7 @@ const CreatePlanScreen = ({ navigation, route }: Props) => {
 			{createPlanMutation.isPending ? (
 				<View style={styles.overlay}>
 					<View style={styles.overlayCard}>
-						<Animated.View style={[styles.overlayIconWrap, { transform: [{ scale: pulseAnim }] }]}>
+						<Animated.View style={[styles.overlayIconWrap, pulseAnimatedStyle]}>
 							<MaterialCommunityIcons name="yoga" size={80} color={colors.primary} />
 						</Animated.View>
 						<Text style={styles.overlayTitle}>AI planınızı oluşturuyor...</Text>

@@ -1,13 +1,15 @@
-﻿import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+﻿import React, { useCallback, useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../features/auth/stores/authStore';
+import Touchable from '../shared/components/Touchable';
+import OnboardingScreen from '../screens/Onboarding/OnboardingScreen';
 import CreatePlanScreen from '../screens/plans/CreatePlanScreen';
 import PlanDetailScreen from '../screens/plans/PlanDetailScreen';
 import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import TrainingScreen from '../screens/training/TrainingScreen';
-import AppSplash from '../shared/components/AppSplash';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -16,6 +18,7 @@ import MainTabs from './MainTabs';
 import { RootStackParamList } from './types';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
+const ONBOARDING_STORAGE_KEY = 'hasSeenOnboarding';
 
 const AuthenticatedNavigator = () => {
 	return (
@@ -36,14 +39,15 @@ const AuthenticatedNavigator = () => {
 					}
 
 					return (
-						<Pressable
+						<Touchable
 							onPress={navigation.goBack}
 							style={styles.backButton}
+							borderRadius={12}
 							accessibilityRole="button"
 							accessibilityLabel="Geri"
 						>
 							<MaterialCommunityIcons name="chevron-left" size={26} color={colors.primary} />
-						</Pressable>
+						</Touchable>
 					);
 				},
 				contentStyle: { backgroundColor: colors.background },
@@ -61,9 +65,33 @@ const AuthenticatedNavigator = () => {
 const RootNavigator = () => {
 	const isLoading = useAuthStore(state => state.isLoading);
 	const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+	const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+	const [isOnboardingLoading, setOnboardingLoading] = useState(true);
 
-	if (isLoading) {
-		return <AppSplash />;
+	useEffect(() => {
+		const bootstrapOnboarding = async () => {
+			try {
+				const value = await AsyncStorage.getItem(ONBOARDING_STORAGE_KEY);
+				setHasSeenOnboarding(value === 'true');
+			} finally {
+				setOnboardingLoading(false);
+			}
+		};
+
+		void bootstrapOnboarding();
+	}, []);
+
+	const handleOnboardingDone = useCallback(async () => {
+		setHasSeenOnboarding(true);
+		await AsyncStorage.setItem(ONBOARDING_STORAGE_KEY, 'true');
+	}, []);
+
+	if (isLoading || isOnboardingLoading) {
+		return <View style={styles.loadingFallback} />;
+	}
+
+	if (!hasSeenOnboarding) {
+		return <OnboardingScreen onDone={() => void handleOnboardingDone()} />;
 	}
 
 	if (!isAuthenticated) {
@@ -77,6 +105,10 @@ const styles = StyleSheet.create({
 	backButton: {
 		paddingRight: spacing.xs,
 		paddingVertical: spacing.xs,
+	},
+	loadingFallback: {
+		flex: 1,
+		backgroundColor: colors.background,
 	},
 });
 

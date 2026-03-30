@@ -3,7 +3,6 @@ import {
 	Animated,
 	Easing,
 	Modal,
-	Pressable,
 	StyleSheet,
 	Text,
 	View,
@@ -11,6 +10,7 @@ import {
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import Touchable from './Touchable';
 
 export interface BottomSheetProps {
 	visible: boolean;
@@ -40,7 +40,7 @@ const BottomSheet = ({ visible, onClose, title, children }: BottomSheetProps) =>
 			statusBarTranslucent
 		>
 			<View style={styles.backdropRoot}>
-				<Pressable style={styles.backdrop} onPress={onClose} accessibilityLabel="Bottom sheet kapat" />
+				<Touchable style={styles.backdrop} onPress={onClose} borderRadius={0} accessibilityLabel="Bottom sheet kapat" />
 				<Animated.View style={[styles.sheet, { transform: [{ translateY }] }]}>
 					<View style={styles.handle} />
 					{title ? <Text style={styles.title}>{title}</Text> : null}

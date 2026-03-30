@@ -6,6 +6,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ToastConfig, ToastConfigParams } from 'react-native-toast-message';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import RNBootSplash from 'react-native-bootsplash';
 import Toast from 'react-native-toast-message';
 import RootNavigator from '../navigation/RootNavigator';
 import { RootStackParamList } from '../navigation/types';
@@ -85,6 +86,7 @@ const App = () => {
 	useEffect(() => {
 		const unsubscribe = auth().onAuthStateChanged(user => {
 			useAuthStore.getState().setUser(user, getProviderFromUser(user));
+			RNBootSplash.hide({ fade: true }).catch(() => undefined);
 		});
 
 		return unsubscribe;
@@ -127,7 +129,7 @@ export default App;
 const styles = StyleSheet.create({
 	toastCard: {
 		minHeight: 64,
-		borderRadius: 12,
+		borderRadius: 16,
 		borderLeftWidth: 4,
 		backgroundColor: colors.surface,
 		paddingHorizontal: spacing.sm,
@@ -135,10 +137,10 @@ const styles = StyleSheet.create({
 		marginHorizontal: spacing.base,
 		flexDirection: 'row',
 		alignItems: 'center',
-		shadowColor: '#000',
-		shadowOffset: { width: 0, height: 2 },
+		shadowColor: '#1A1A2E',
+		shadowOffset: { width: 0, height: 3 },
 		shadowOpacity: 0.08,
-		shadowRadius: 8,
+		shadowRadius: 12,
 		elevation: 3,
 	},
 	toastIconWrap: {

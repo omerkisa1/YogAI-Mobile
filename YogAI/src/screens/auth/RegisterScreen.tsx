@@ -5,7 +5,6 @@ import {
 	ActivityIndicator,
 	KeyboardAvoidingView,
 	Platform,
-	Pressable,
 	ScrollView,
 	StatusBar,
 	StyleSheet,
@@ -18,6 +17,7 @@ import Toast from 'react-native-toast-message';
 import { FirebaseAuthTypes } from '@react-native-firebase/auth';
 import { useAuth } from '../../features/auth/hooks/useAuth';
 import Input from '../../shared/components/Input';
+import Touchable from '../../shared/components/Touchable';
 import { useNetworkStatus } from '../../shared/hooks/useNetworkStatus';
 import { AuthStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -167,15 +167,16 @@ const RegisterScreen = ({ navigation }: Props) => {
 					showsVerticalScrollIndicator={false}
 				>
 					<View style={styles.headerRow}>
-						<Pressable
+						<Touchable
 							onPress={() => navigation.goBack()}
 							style={styles.backButton}
+							borderRadius={radius.md}
 							accessibilityRole="button"
 							accessibilityLabel="Geri"
 						>
 							<MaterialCommunityIcons name="chevron-left" size={24} color={colors.primary} />
 							<Text style={styles.backText}>Geri</Text>
-						</Pressable>
+						</Touchable>
 						<Text style={styles.headerTitle}>Hesap Oluştur</Text>
 					</View>
 
@@ -282,10 +283,11 @@ const RegisterScreen = ({ navigation }: Props) => {
 							)}
 						/>
 
-						<Pressable
+						<Touchable
 							onPress={onSubmit}
 							disabled={loading}
-							style={({ pressed }) => [styles.primaryButton, pressed && styles.primaryButtonPressed, loading && styles.primaryButtonDisabled]}
+							style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+							borderRadius={radius.lg}
 							accessibilityRole="button"
 							accessibilityLabel="Kayıt ol"
 						>
@@ -294,7 +296,7 @@ const RegisterScreen = ({ navigation }: Props) => {
 							) : (
 								<Text style={styles.primaryButtonText}>Kayıt Ol</Text>
 							)}
-						</Pressable>
+						</Touchable>
 
 						<View style={styles.separatorRow}>
 							<View style={styles.separatorLine} />
@@ -302,10 +304,11 @@ const RegisterScreen = ({ navigation }: Props) => {
 							<View style={styles.separatorLine} />
 						</View>
 
-						<Pressable
+						<Touchable
 							onPress={onGoogleRegister}
 							disabled={loading}
-							style={({ pressed }) => [styles.googleButton, pressed && styles.googleButtonPressed, loading && styles.googleButtonDisabled]}
+							style={[styles.googleButton, loading && styles.googleButtonDisabled]}
+							borderRadius={radius.lg}
 							accessibilityRole="button"
 							accessibilityLabel="Google ile kayıt ol"
 						>
@@ -319,18 +322,19 @@ const RegisterScreen = ({ navigation }: Props) => {
 									<Text style={styles.googleButtonText}>Google ile Kayıt Ol</Text>
 								</>
 							)}
-						</Pressable>
+						</Touchable>
 
 						<View style={styles.loginRow}>
 							<Text style={styles.loginHint}>Zaten hesabın var mı?</Text>
-							<Pressable
+							<Touchable
 								onPress={() => navigation.navigate('Login')}
 								style={styles.loginPressable}
+								borderRadius={radius.md}
 								accessibilityRole="button"
 								accessibilityLabel="Giriş yap ekranına git"
 							>
 								<Text style={styles.loginAction}>Giriş Yap</Text>
-							</Pressable>
+							</Touchable>
 						</View>
 					</View>
 				</ScrollView>

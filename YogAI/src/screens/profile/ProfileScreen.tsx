@@ -1,8 +1,6 @@
-﻿import React, { useMemo } from 'react';
+﻿import React, { useMemo, useState } from 'react';
 import { NavigationProp, useNavigation } from '@react-navigation/native';
 import {
-	Alert,
-	Pressable,
 	SafeAreaView,
 	ScrollView,
 	StatusBar,
@@ -14,11 +12,14 @@ import LinearGradient from 'react-native-linear-gradient';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Toast from 'react-native-toast-message';
 import { useAuth } from '../../features/auth/hooks/useAuth';
+import ProfileSetupWizard from '../../features/profile/components/ProfileSetupWizard';
 import { useProfile } from '../../features/profile/hooks/useProfile';
+import AppModal from '../../shared/components/AppModal';
 import Card from '../../shared/components/Card';
 import ErrorView from '../../shared/components/ErrorView';
 import LoadingView from '../../shared/components/LoadingView';
 import ProgressBar from '../../shared/components/ProgressBar';
+import Touchable from '../../shared/components/Touchable';
 import { Goal } from '../../shared/types/profile';
 import { Injury, Level } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
@@ -61,7 +62,8 @@ const languageLabelMap: Record<'tr' | 'en', string> = {
 const ProfileScreen = () => {
 	const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 	const profileQuery = useProfile();
-	const { signOut, isSubmitting, user } = useAuth();
+	const { signOut, user } = useAuth();
+	const [showSignOutModal, setShowSignOutModal] = useState(false);
 
 	const displayName = profileQuery.data?.display_name || user?.displayName || 'YogAI Kullanıcı';
 	const email = user?.email || 'email bulunamadı';
@@ -76,26 +78,17 @@ const ProfileScreen = () => {
 		[profileQuery.data?.injuries],
 	);
 
-	const onSignOut = () => {
-		Alert.alert('Çıkış Yap', 'Hesabınızdan çıkış yapmak istediğinize emin misiniz?', [
-			{ text: 'İptal', style: 'cancel' },
-			{
-				text: 'Çıkış Yap',
-				style: 'destructive',
-				onPress: async () => {
-					try {
-						await signOut();
-					} catch {
-						Toast.show({
-							type: 'error',
-							position: 'top',
-							text1: 'Çıkış Başarısız',
-							text2: 'Lütfen tekrar deneyin.',
-						});
-					}
-				},
-			},
-		]);
+	const onSignOut = async () => {
+		try {
+			await signOut();
+		} catch {
+			Toast.show({
+				type: 'error',
+				position: 'top',
+				text1: 'Çıkış Başarısız',
+				text2: 'Lütfen tekrar deneyin.',
+			});
+		}
 	};
 
 	if (profileQuery.isLoading) {
@@ -135,16 +128,18 @@ const ProfileScreen = () => {
 	const injuriesLabel = injuries.length > 0 ? injuries.join(', ') : '-';
 
 	const completionTotal = 6;
-	const completedCount = [
+	const completionChecks = [
 		Boolean(displayName && displayName.trim()),
 		Boolean(email && email !== 'email bulunamadı'),
 		levelLabel !== '-',
 		ageLabel !== '-',
 		languageLabel !== '-',
 		goalsLabel !== '-' || injuriesLabel !== '-',
-	].filter(Boolean).length;
+	];
+	const completedCount = completionChecks.filter(Boolean).length;
+	const missingCount = completionChecks.length - completedCount;
 	const completionPercent = Math.round((completedCount / completionTotal) * 100);
-	const isCoreProfileEmpty = levelLabel === '-' && ageLabel === '-' && languageLabel === '-';
+	const shouldShowWizard = missingCount > Math.floor(completionChecks.length / 2);
 
 	const menuItems = [
 		{
@@ -183,6 +178,18 @@ const ProfileScreen = () => {
 		<SafeAreaView style={styles.safeArea}>
 			<StatusBar barStyle="dark-content" backgroundColor={colors.background} />
 			<ScrollView style={styles.container} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+				<View style={styles.topActionsRow}>
+					<Touchable
+						onPress={() => setShowSignOutModal(true)}
+						borderRadius={radius.md}
+						style={styles.logoutIconButton}
+						accessibilityRole="button"
+						accessibilityLabel="Çıkış yap"
+					>
+						<MaterialCommunityIcons name="logout" size={22} color={colors.error} />
+					</Touchable>
+				</View>
+
 				<View style={styles.profileHeader}>
 					<LinearGradient
 						colors={[colors.gradientPrimary[0], colors.gradientPrimary[1]]}
@@ -198,46 +205,8 @@ const ProfileScreen = () => {
 					<Text style={styles.email}>{email}</Text>
 				</View>
 
-				{isCoreProfileEmpty ? (
-					<Card variant="elevated" style={styles.infoCard}>
-						<View style={styles.completionHeaderRow}>
-							<Text style={styles.completionTitle}>Profilinizi Tamamlayın</Text>
-							<View style={styles.completionBadge}>
-								<Text style={styles.completionBadgeText}>{completedCount}/{completionTotal}</Text>
-								<MaterialCommunityIcons name="check" size={12} color={colors.success} />
-							</View>
-						</View>
-						<ProgressBar progress={completionPercent} color={colors.primary} height={4} />
-
-						<View style={styles.infoLine}>
-							<Text style={styles.infoKey}>Seviye</Text>
-							<Text style={styles.infoValueMuted}>-</Text>
-						</View>
-						<View style={styles.infoLine}>
-							<Text style={styles.infoKey}>Yaş</Text>
-							<Text style={styles.infoValueMuted}>-</Text>
-						</View>
-						<View style={styles.infoLine}>
-							<Text style={styles.infoKey}>Dil</Text>
-							<Text style={styles.infoValueMuted}>-</Text>
-						</View>
-						<View style={styles.infoLineTop}>
-							<Text style={styles.infoKey}>Hedefler</Text>
-							<Text style={styles.infoValueMuted}>-</Text>
-						</View>
-						<View style={styles.infoLineTop}>
-							<Text style={styles.infoKey}>Sakatlıklar</Text>
-							<Text style={styles.infoValueMuted}>-</Text>
-						</View>
-
-						<Pressable
-							onPress={() => navigation.navigate('EditProfile')}
-							accessibilityRole="button"
-							accessibilityLabel="Profili düzenle"
-						>
-							<Text style={styles.editLink}>Profili Düzenle</Text>
-						</Pressable>
-					</Card>
+				{shouldShowWizard ? (
+					<ProfileSetupWizard profile={profile} />
 				) : (
 					<Card variant="elevated" style={styles.infoCard}>
 						<View style={styles.infoLine}>
@@ -268,15 +237,36 @@ const ProfileScreen = () => {
 								</View>
 							)}
 						</View>
+
+						<View style={styles.completionBlock}>
+							<View style={styles.completionHeaderRow}>
+								<Text style={styles.completionTitle}>Profil Tamamlanma</Text>
+								<View style={styles.completionBadge}>
+									<Text style={styles.completionBadgeText}>{completedCount}/{completionTotal}</Text>
+									<MaterialCommunityIcons name="check" size={12} color={colors.success} />
+								</View>
+							</View>
+							<ProgressBar progress={completionPercent} color={colors.primary} height={4} />
+						</View>
+
+						<Touchable
+							onPress={() => navigation.navigate('EditProfile')}
+							borderRadius={radius.md}
+							accessibilityRole="button"
+							accessibilityLabel="Profili düzenle"
+						>
+							<Text style={styles.editLink}>Profili Düzenle</Text>
+						</Touchable>
 					</Card>
 				)}
 
 				<Card variant="default" style={styles.actionsCard}>
 					{menuItems.map((item, index) => (
-						<Pressable
+						<Touchable
 							key={item.key}
 							onPress={item.onPress}
 							style={[styles.actionItem, index < menuItems.length - 1 ? styles.actionItemDivider : null]}
+							borderRadius={radius.md}
 							accessibilityRole="button"
 							accessibilityLabel={item.label}
 						>
@@ -287,23 +277,33 @@ const ProfileScreen = () => {
 								<Text style={styles.actionText}>{item.label}</Text>
 							</View>
 							<MaterialCommunityIcons name="chevron-right" size={20} color={colors.textMuted} />
-						</Pressable>
+						</Touchable>
 					))}
 				</Card>
 
-				<Pressable
-					onPress={onSignOut}
-					disabled={isSubmitting}
-					accessibilityRole="button"
-					accessibilityLabel="Çıkış yap"
-				>
-					<Text style={[styles.logoutText, isSubmitting ? styles.logoutDisabled : null]}>
-						{isSubmitting ? 'Çıkış yapılıyor...' : 'Çıkış Yap'}
-					</Text>
-				</Pressable>
-
 				<Text style={styles.version}>YogAI v1.0.0</Text>
 			</ScrollView>
+
+			<AppModal
+				visible={showSignOutModal}
+				onClose={() => setShowSignOutModal(false)}
+				title="Çıkış yapmak istediğinize emin misiniz?"
+				icon="logout"
+				iconColor={colors.error}
+				actions={[
+					{ label: 'İptal', variant: 'ghost', onPress: () => setShowSignOutModal(false) },
+					{
+						label: 'Çıkış Yap',
+						variant: 'danger',
+						onPress: () => {
+							setShowSignOutModal(false);
+							void onSignOut();
+						},
+					},
+				]}
+				autoDismissMs={10000}
+				dismissOnBackdrop
+			/>
 		</SafeAreaView>
 	);
 };
@@ -321,6 +321,17 @@ const styles = StyleSheet.create({
 		paddingHorizontal: spacing.base,
 		paddingBottom: spacing.xxl,
 		gap: spacing.base,
+	},
+	topActionsRow: {
+		alignItems: 'flex-end',
+		paddingTop: spacing.sm,
+	},
+	logoutIconButton: {
+		width: 36,
+		height: 36,
+		alignItems: 'center',
+		justifyContent: 'center',
+		backgroundColor: colors.errorSoft,
 	},
 	errorWrap: {
 		flex: 1,
@@ -426,10 +437,15 @@ const styles = StyleSheet.create({
 		...typography.captionMedium,
 		color: colors.warning,
 	},
+	completionBlock: {
+		gap: spacing.xs,
+		marginTop: spacing.xs,
+	},
 	editLink: {
 		...typography.bodySmMedium,
 		color: colors.primary,
 		marginTop: spacing.xs,
+		textAlign: 'right',
 	},
 	actionsCard: {
 		paddingVertical: spacing.xs,
@@ -461,20 +477,11 @@ const styles = StyleSheet.create({
 		...typography.body,
 		color: colors.text,
 	},
-	logoutText: {
-		...typography.bodySm,
-		color: colors.error,
-		textAlign: 'center',
-		marginTop: spacing.sm,
-	},
-	logoutDisabled: {
-		opacity: 0.6,
-	},
 	version: {
 		...typography.caption,
 		color: colors.textMuted,
 		textAlign: 'center',
-		marginTop: spacing.sm,
+		marginTop: spacing.base,
 	},
 });
 

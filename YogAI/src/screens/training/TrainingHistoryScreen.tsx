@@ -1,7 +1,6 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
 	FlatList,
-	Pressable,
 	RefreshControl,
 	SafeAreaView,
 	StatusBar,
@@ -19,6 +18,7 @@ import Card from '../../shared/components/Card';
 import ErrorView from '../../shared/components/ErrorView';
 import ProgressBar from '../../shared/components/ProgressBar';
 import SkeletonLoader from '../../shared/components/SkeletonLoader';
+import Touchable from '../../shared/components/Touchable';
 import { TrainingSession } from '../../shared/types/training';
 import { MainTabParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
@@ -62,6 +62,16 @@ const getAccuracyColor = (accuracy: number) => {
 	return colors.error;
 };
 
+const safeNumber = (val: unknown, fallback = 0): number => {
+	const num = Number(val);
+	return Number.isNaN(num) || !Number.isFinite(num) ? fallback : num;
+};
+
+const safePercent = (val: unknown): string => {
+	const num = safeNumber(val, 0);
+	return `%${Math.round(num)}`;
+};
+
 const TrainingHistoryScreen = () => {
 	const navigation = useNavigation<NavigationProp<MainTabParamList>>();
 	const sessionsQuery = useTrainingSessions();
@@ -70,11 +80,11 @@ const TrainingHistoryScreen = () => {
 
 	const sessions = useMemo(() => sessionsQuery.data ?? [], [sessionsQuery.data]);
 	const stats = statsQuery.data;
-	const totalSessions = stats?.total_sessions ?? 0;
-	const totalDurationSeconds = stats?.total_duration_sec ?? 0;
-	const avgAccuracy = stats?.average_accuracy ?? 0;
-	const displayAccuracy = Number.isNaN(avgAccuracy) ? 0 : Math.round(avgAccuracy);
-	const heroProgress = totalSessions > 0 ? displayAccuracy : 0;
+	const totalSessions = safeNumber(stats?.total_sessions, 0);
+	const totalDurationSeconds = safeNumber(stats?.total_duration_sec, 0);
+	const avgAccuracy = safeNumber(stats?.average_accuracy, 0);
+	const displayAccuracy = Math.round(avgAccuracy);
+	const heroProgress = totalSessions > 0 ? avgAccuracy : 0;
 	const totalLabel = `Toplam: ${totalSessions} antrenman`;
 
 	const onRefresh = useCallback(async () => {
@@ -115,15 +125,15 @@ const TrainingHistoryScreen = () => {
 	}
 
 	const renderSessionItem = ({ item }: { item: TrainingSession }) => {
-		const rawAccuracy = item.average_accuracy ?? 0;
-		const normalizedAccuracy = Number.isNaN(rawAccuracy) ? 0 : Math.round(rawAccuracy);
+		const rawAccuracy = safeNumber(item.average_accuracy, 0);
+		const normalizedAccuracy = Math.round(rawAccuracy);
 		const sessionAccuracy = Math.max(0, Math.min(100, normalizedAccuracy));
 		const scoreColor = getAccuracyColor(sessionAccuracy);
 		const durationLabel = formatMinutes(item.total_duration_sec);
 		const completedMoveCount = item.results?.length ?? 0;
 
 		return (
-			<Pressable
+			<Touchable
 				onPress={() => {
 					Toast.show({
 						type: 'info',
@@ -133,6 +143,7 @@ const TrainingHistoryScreen = () => {
 					});
 				}}
 				style={styles.sessionPressable}
+				borderRadius={radius.lg}
 				accessibilityRole="button"
 				accessibilityLabel="Antrenman oturumu detay"
 			>
@@ -154,7 +165,7 @@ const TrainingHistoryScreen = () => {
 						</View>
 					</View>
 				</Card>
-			</Pressable>
+			</Touchable>
 		);
 	};
 
@@ -195,7 +206,7 @@ const TrainingHistoryScreen = () => {
 								<View style={styles.heroSeparator} />
 								<View style={styles.heroStatItem}>
 									<MaterialCommunityIcons name="bullseye-arrow" size={20} color={colors.textOnDark} />
-									<Text style={styles.heroStatValue}>%{displayAccuracy}</Text>
+									<Text style={styles.heroStatValue}>{safePercent(displayAccuracy)}</Text>
 									<Text style={styles.heroStatLabel}>ort. skor</Text>
 								</View>
 							</View>
@@ -212,12 +223,12 @@ const TrainingHistoryScreen = () => {
 						<Text style={styles.emptyTitle}>Henüz antrenman yapmadınız</Text>
 						<Text style={styles.emptyDescription}>İlk antrenmanınıza başlayarak ilerlemenizi takip edin.</Text>
 						<Button
-							title="İlk Antrenmanı Başlat"
+							title="Planlara Git"
 							onPress={() => navigation.navigate('Plans')}
 							variant="primary"
 							size="lg"
 							fullWidth={false}
-							accessibilityLabel="İlk antrenmanı başlat"
+							accessibilityLabel="Planlara git"
 						/>
 					</View>
 				}

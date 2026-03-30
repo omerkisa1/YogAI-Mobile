@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import {
-	Pressable,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -11,6 +10,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import Touchable from './Touchable';
 
 export interface InputProps {
 	label?: string;
@@ -65,6 +65,8 @@ const Input = ({
 		return styles.defaultBorder;
 	}, [disabled, error, focused]);
 
+	const iconColor = error ? colors.error : focused ? colors.primary : colors.textMuted;
+
 	return (
 		<View style={styles.wrapper}>
 			{label ? <Text style={styles.label}>{label}</Text> : null}
@@ -73,7 +75,7 @@ const Input = ({
 					<MaterialCommunityIcons
 						name={icon}
 						size={20}
-						color={colors.textMuted}
+						color={iconColor}
 						style={styles.leftIcon}
 					/>
 				) : null}
@@ -94,19 +96,20 @@ const Input = ({
 					accessibilityLabel={accessibilityLabel ?? label ?? placeholder}
 				/>
 				{rightIcon ? (
-					<Pressable
+					<Touchable
 						onPress={onRightIconPress}
 						disabled={disabled || !onRightIconPress}
 						style={styles.rightIconButton}
+						borderRadius={radius.sm}
 						accessibilityRole="button"
 						accessibilityLabel="Girdi aksiyon ikonu"
 					>
 						<MaterialCommunityIcons
 							name={rightIcon}
 							size={20}
-							color={colors.textMuted}
+							color={iconColor}
 						/>
-					</Pressable>
+					</Touchable>
 				) : null}
 			</View>
 			{error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -137,7 +140,7 @@ const styles = StyleSheet.create({
 		borderColor: colors.border,
 	},
 	focusedBorder: {
-		borderColor: colors.primary,
+		borderColor: colors.borderFocus,
 	},
 	errorBorder: {
 		borderColor: colors.error,

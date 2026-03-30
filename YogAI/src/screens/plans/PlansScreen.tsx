@@ -1,8 +1,6 @@
 ﻿import React, { useCallback, useMemo, useState } from 'react';
 import {
-	Alert,
 	FlatList,
-	Pressable,
 	RefreshControl,
 	SafeAreaView,
 	StatusBar,
@@ -16,16 +14,19 @@ import LinearGradient from 'react-native-linear-gradient';
 import Toast from 'react-native-toast-message';
 import { useDeletePlan, useUpdatePlan } from '../../features/plans/hooks/useCreatePlan';
 import { usePlans } from '../../features/plans/hooks/usePlans';
+import AppModal from '../../shared/components/AppModal';
 import BottomSheet from '../../shared/components/BottomSheet';
 import Button from '../../shared/components/Button';
 import EmptyState from '../../shared/components/EmptyState';
 import ErrorView from '../../shared/components/ErrorView';
 import PlanCard from '../../shared/components/PlanCard';
 import SkeletonLoader from '../../shared/components/SkeletonLoader';
+import Touchable from '../../shared/components/Touchable';
 import { Plan } from '../../shared/types/plan';
 import { RootStackParamList } from '../../navigation/types';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
+import { shadows } from '../../theme/shadows';
 import { typography } from '../../theme/typography';
 
 type PlanFilter = 'all' | 'favorites' | 'beginner' | 'intermediate' | 'advanced';
@@ -52,6 +53,7 @@ const PlansScreen = () => {
 
 	const [activeFilter, setActiveFilter] = useState<PlanFilter>('all');
 	const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+	const [planToDelete, setPlanToDelete] = useState<Plan | null>(null);
 	const [isRefreshing, setRefreshing] = useState(false);
 
 	const plans = useMemo(() => (Array.isArray(plansQuery.data) ? plansQuery.data : []), [plansQuery.data]);
@@ -85,12 +87,12 @@ const PlansScreen = () => {
 
 	const renderFilterItem = useCallback(
 		({ item }: { item: FilterOption }) => (
-			<Pressable
+			<Touchable
 				onPress={() => setActiveFilter(item.key)}
-				style={({ pressed }) => [
+				borderRadius={radius.full}
+				style={[
 					styles.filterChip,
 					activeFilter === item.key ? styles.filterChipSelected : styles.filterChipUnselected,
-					pressed && styles.filterChipPressed,
 				]}
 				accessibilityRole="button"
 				accessibilityLabel={`${item.label} filtresi`}
@@ -106,7 +108,7 @@ const PlansScreen = () => {
 				<Text style={[styles.filterChipLabel, activeFilter === item.key ? styles.filterChipLabelSelected : styles.filterChipLabelUnselected]}>
 					{item.label}
 				</Text>
-			</Pressable>
+			</Touchable>
 		),
 		[activeFilter],
 	);
@@ -160,34 +162,9 @@ const PlansScreen = () => {
 
 	const handleDelete = useCallback(
 		(plan: Plan) => {
-			Alert.alert('Planı sil', 'Bu planı silmek istediğinize emin misiniz?', [
-				{ text: 'İptal', style: 'cancel' },
-				{
-					text: 'Sil',
-					style: 'destructive',
-					onPress: async () => {
-						try {
-							await deletePlanMutation.mutateAsync(plan.id);
-							setSelectedPlan(null);
-							Toast.show({
-								type: 'success',
-								position: 'top',
-								text1: 'Plan silindi',
-								text2: 'Plan listenizden kaldırıldı.',
-							});
-						} catch {
-							Toast.show({
-								type: 'error',
-								position: 'top',
-								text1: 'Silme Başarısız',
-								text2: 'Plan silinemedi. Lütfen tekrar deneyin.',
-							});
-						}
-					},
-				},
-			]);
+			setPlanToDelete(plan);
 		},
-		[deletePlanMutation],
+		[],
 	);
 
 	if (plansQuery.isLoading && !plansQuery.data) {
@@ -227,9 +204,9 @@ const PlansScreen = () => {
 			<View style={styles.container}>
 				<View style={styles.headerRow}>
 					<Text style={styles.title}>Planlarım</Text>
-					<Pressable style={styles.filterButton} accessibilityRole="button" accessibilityLabel="Filtre seçenekleri">
+					<Touchable style={styles.filterButton} borderRadius={radius.full} accessibilityRole="button" accessibilityLabel="Filtre seçenekleri">
 						<MaterialCommunityIcons name="filter-variant" size={22} color={colors.primary} />
-					</Pressable>
+					</Touchable>
 				</View>
 
 				<FlatList
@@ -259,17 +236,16 @@ const PlansScreen = () => {
 					ListEmptyComponent={
 						<EmptyState
 							icon="calendar-plus"
-							title="Henüz planınız yok"
-							description="AI ile ilk yoga planınızı oluşturmaya başlayın."
-							actionLabel="İlk Planı Oluştur"
-							onAction={() => navigation.navigate('CreatePlan')}
+							title="Henüz plan oluşturmadınız"
+							description="Sağ alttaki + butonuyla ilk planınızı oluşturabilirsiniz."
 						/>
 					}
 				/>
 
-				<Pressable
+				<Touchable
 					style={styles.fab}
 					onPress={() => navigation.navigate('CreatePlan')}
+					borderRadius={radius.lg}
 					accessibilityRole="button"
 					accessibilityLabel="Yeni plan oluştur"
 				>
@@ -281,7 +257,7 @@ const PlansScreen = () => {
 					>
 						<MaterialCommunityIcons name="plus" size={28} color={colors.textOnPrimary} />
 					</LinearGradient>
-				</Pressable>
+				</Touchable>
 			</View>
 
 			<BottomSheet
@@ -322,6 +298,7 @@ const PlansScreen = () => {
 						title="Planı Sil"
 						onPress={() => {
 							if (selectedPlan) {
+								setSelectedPlan(null);
 								handleDelete(selectedPlan);
 							}
 						}}
@@ -333,6 +310,51 @@ const PlansScreen = () => {
 					/>
 				</View>
 			</BottomSheet>
+
+			<AppModal
+				visible={Boolean(planToDelete)}
+				onClose={() => setPlanToDelete(null)}
+				title="Bu planı silmek istediğinize emin misiniz?"
+				description="Bu işlem geri alınamaz."
+				icon="delete-outline"
+				iconColor={colors.error}
+				actions={[
+					{ label: 'İptal', variant: 'ghost', onPress: () => setPlanToDelete(null) },
+					{
+						label: 'Sil',
+						variant: 'danger',
+						onPress: () => {
+							if (!planToDelete) {
+								return;
+							}
+
+							const runDelete = async () => {
+								try {
+									await deletePlanMutation.mutateAsync(planToDelete.id);
+									setPlanToDelete(null);
+									Toast.show({
+										type: 'success',
+										position: 'top',
+										text1: 'Plan silindi',
+										text2: 'Plan listenizden kaldırıldı.',
+									});
+								} catch {
+									Toast.show({
+										type: 'error',
+										position: 'top',
+										text1: 'Silme Başarısız',
+										text2: 'Plan silinemedi. Lütfen tekrar deneyin.',
+									});
+								}
+							};
+
+							void runDelete();
+						},
+					},
+				]}
+				autoDismissMs={10000}
+				dismissOnBackdrop
+			/>
 		</SafeAreaView>
 	);
 };
@@ -381,7 +403,7 @@ const styles = StyleSheet.create({
 		gap: spacing.sm,
 	},
 	filterChip: {
-		height: 34,
+		height: 36,
 		paddingHorizontal: spacing.base,
 		borderRadius: radius.full,
 		borderWidth: 1,
@@ -396,9 +418,6 @@ const styles = StyleSheet.create({
 	filterChipUnselected: {
 		backgroundColor: colors.surfaceElevated,
 		borderColor: colors.borderLight,
-	},
-	filterChipPressed: {
-		opacity: 0.9,
 	},
 	filterChipIcon: {
 		marginRight: spacing.xs,
@@ -426,17 +445,14 @@ const styles = StyleSheet.create({
 		bottom: spacing.xl,
 		width: 56,
 		height: 56,
-		borderRadius: radius.full,
-		shadowColor: '#1A1A2E',
-		shadowOffset: { width: 0, height: 4 },
-		shadowOpacity: 0.12,
-		shadowRadius: 16,
-		elevation: 6,
+		borderRadius: radius.lg,
+		overflow: 'hidden',
+		...shadows.lg,
 	},
 	fabGradient: {
 		width: '100%',
 		height: '100%',
-		borderRadius: radius.full,
+		borderRadius: radius.lg,
 		alignItems: 'center',
 		justifyContent: 'center',
 	},

@@ -1,9 +1,10 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
 import { typography } from '../../theme/typography';
+import Touchable from './Touchable';
 
 export interface ChipProps {
 	label: string;
@@ -23,12 +24,12 @@ const Chip = ({ label, selected, onPress, icon, tone = 'primary' }: ChipProps) =
 		: colors.textSecondary;
 
 	return (
-		<Pressable
+		<Touchable
 			onPress={onPress}
-			style={({ pressed }) => [
+			borderRadius={radius.full}
+			style={[
 				styles.base,
 				selected ? selectedStyle : styles.unselected,
-				pressed && styles.pressed,
 			]}
 			accessibilityRole="button"
 			accessibilityLabel={`${label} seçim chip`}
@@ -42,7 +43,7 @@ const Chip = ({ label, selected, onPress, icon, tone = 'primary' }: ChipProps) =
 				/>
 			) : null}
 			<Text style={[styles.label, selected ? selectedLabelStyle : styles.unselectedLabel]}>{label}</Text>
-		</Pressable>
+		</Touchable>
 	);
 };
 
@@ -66,9 +67,6 @@ const styles = StyleSheet.create({
 	unselected: {
 		backgroundColor: colors.surface,
 		borderColor: colors.border,
-	},
-	pressed: {
-		opacity: 0.9,
 	},
 	icon: {
 		marginRight: spacing.xs,

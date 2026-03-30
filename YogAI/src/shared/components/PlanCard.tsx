@@ -1,5 +1,5 @@
 ﻿import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { colors } from '../../theme/colors';
 import { radius, spacing } from '../../theme/spacing';
@@ -7,6 +7,7 @@ import { typography } from '../../theme/typography';
 import { Plan } from '../types/plan';
 import Card from './Card';
 import ProgressBar from './ProgressBar';
+import Touchable from './Touchable';
 
 export interface PlanCardProps {
 	plan: Plan;
@@ -57,9 +58,10 @@ const PlanCard = ({
 			style={[styles.card, { borderLeftWidth: 4, borderLeftColor: difficulty.color }]}
 			accessibilityLabel={`${plan.title_tr || plan.title_en} plan kartı`}
 		>
-			<Pressable
+			<Touchable
 				onLongPress={onLongPress ? () => onLongPress(plan) : undefined}
 				delayLongPress={260}
+				borderRadius={radius.md}
 				accessibilityRole="button"
 				accessibilityLabel="Plan seçeneklerini aç"
 			>
@@ -68,10 +70,11 @@ const PlanCard = ({
 						{plan.title_tr || plan.title_en}
 					</Text>
 					<View style={styles.actions}>
-						<Pressable
+						<Touchable
 							onPress={() => onToggleFavorite?.(plan)}
 							disabled={actionsDisabled || !onToggleFavorite}
 							style={styles.actionButton}
+							borderRadius={radius.full}
 							accessibilityRole="button"
 							accessibilityLabel="Favori durumu değiştir"
 						>
@@ -80,11 +83,12 @@ const PlanCard = ({
 								size={21}
 								color={plan.favorite ? colors.warning : colors.textMuted}
 							/>
-						</Pressable>
-						<Pressable
+						</Touchable>
+						<Touchable
 							onPress={() => onTogglePin?.(plan)}
 							disabled={actionsDisabled || !onTogglePin}
 							style={styles.actionButton}
+							borderRadius={radius.full}
 							accessibilityRole="button"
 							accessibilityLabel="Sabitleme durumu değiştir"
 						>
@@ -93,7 +97,7 @@ const PlanCard = ({
 								size={21}
 								color={plan.pin ? colors.accent : colors.textMuted}
 							/>
-						</Pressable>
+						</Touchable>
 					</View>
 				</View>
 
@@ -125,7 +129,7 @@ const PlanCard = ({
 					<ProgressBar progress={safeProgress} color={colors.primary} height={4} animated />
 					<Text style={styles.progressLabel}>%{Math.round(safeProgress)} tamamlandı</Text>
 				</View>
-			</Pressable>
+			</Touchable>
 		</Card>
 	);
 };
